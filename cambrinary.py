@@ -4,8 +4,8 @@ import urllib2
 from bs4 import BeautifulSoup
 
 
-def load(word):
-    url = 'https://dictionary.cambridge.org/dictionary/english/' + word
+def load(word, translation):
+    url = 'https://dictionary.cambridge.org/dictionary/' + translation + '/' + word
     response = urllib2.urlopen(url)
     html = response.read()
     return html
@@ -14,13 +14,18 @@ def load(word):
 def parse_pronunciation(dictionary):
     """
     retrive the pronunciation for the word
-    :param html: parsed_html by BeautifulSoup
+    :param dictionary:
     :return: string
     """
     res = ''
     header = dictionary.find('div', attrs={'class': 'pos-header'})
+    pos = header.find('span', attrs={'class': 'pos'})
+    gcs = header.find('span', attrs={'class': 'gcs'})
     uk = header.find('span', attrs={'class': 'uk'})
     us = header.find('span', attrs={'class': 'us'})
+    res += pos.get_text() + ' '
+    if gcs:
+        res += '[' + gcs.get_text().strip() + ']' + ' '
     if uk:
         uk_ipa = uk.find('span', attrs={'class': 'ipa'})
         res += 'UK ' + '/' + uk_ipa.get_text() + '/ '
@@ -39,7 +44,7 @@ def get_sense_block_title(sense_block):
         pos = block.find('span', attrs={'class': 'pos'})
         guideword = block.find('span', attrs={'class': 'guideword'})
         sub_word = guideword.find('span')
-        return pos.get_text() + ' [' + sub_word.get_text() + ']\n'
+        return '[' + sub_word.get_text() + '] ' + pos.get_text() +  '\n'
 
 
 def get_dictionary(args):
@@ -50,9 +55,11 @@ def get_dictionary(args):
     :param args:
     :return:
     """
-    raw_html = load(args.word)
+    raw_html = load(args.word, args.translation)
     parsed_html = BeautifulSoup(raw_html, features='html.parser')
     dictionary = parsed_html.body.find('div', attrs={'class': 'dictionary', 'data-id': args.dictionary})
+    if args.translation == 'english-chinese-traditional':
+        dictionary = parsed_html.body.find('div', attrs={'class': 'entry-body'})
     if not dictionary:
         print 'No result for ' + args.word
         exit()
@@ -68,8 +75,12 @@ def get_def_block(sense_block):
     def_block_list = sense_body.findAll('div', attrs={'class': 'def-block pad-indent'})
     for d in def_block_list:
         definition = d.find('b', attrs={'class': 'def'})
-        examps = d.findAll('div', attrs={'class': 'examp emphasized'})
+        def_body = d.find('span', attrs={'class': 'def-body'})
+        trans = def_body.find('span', attrs={'class': 'trans'}, recursive=False)
+        examps = def_body.findAll('span', attrs={'class': 'eg'})
         res += '* ' + definition.get_text() + '\n'
+        if trans:
+            res += '  ' + trans.get_text() + '\n'
         res += ''.join(['  - ' + e.get_text().strip() + '\n' for e in examps])
     return res
 
@@ -79,6 +90,8 @@ def get_args():
     parser.add_argument('-w', '--word', required=True, action='store', help='the word you want to look up')
     parser.add_argument('-d', '--dictionary', action='store', default='cald4',
                         help="to specific a dictiontry, defult(cambridge_advanced_learners_dictionary_and_thesaurus = 'cald4')")
+    parser.add_argument('-t', '--translation', action='store', default='english',
+                        help='prefered language, defult(english explaination)')
     args = parser.parse_args()
     return args
 
