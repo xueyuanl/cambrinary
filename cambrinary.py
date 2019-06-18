@@ -1,7 +1,11 @@
+#!/usr/bin/env python
 import argparse
 import urllib2
+from argparse import RawTextHelpFormatter
 
 from bs4 import BeautifulSoup
+
+translation = {'english': 'english', 'chinese': 'english-chinese-traditional'}
 
 
 def load(word, translation):
@@ -9,6 +13,21 @@ def load(word, translation):
     response = urllib2.urlopen(url)
     html = response.read()
     return html
+
+
+def color(s, formatting=0, foreground=36, background=49):
+    """
+    default formatting, cyan foreground and default background color.
+    for reference: https://misc.flogisoft.com/bash/tip_colors_and_formatting
+    :param s:
+    :param formatting:
+    :param foreground:
+    :param background:
+    :return: decorated string
+    """
+    pre = '\033['
+    post = '\033[0m'
+    return pre + str(formatting) + ';' + str(foreground) + ';' + str(background) + 'm' + s + post
 
 
 def parse_pronunciation(dictionary):
@@ -28,9 +47,9 @@ def parse_pronunciation(dictionary):
         res += '[' + gcs.get_text().strip() + ']' + ' '
     if uk:
         uk_ipa = uk.find('span', attrs={'class': 'ipa'})
-        res += 'UK ' + '/' + uk_ipa.get_text() + '/ '
+        res += color('UK ', foreground=34) + '/' + uk_ipa.get_text() + '/ '
     us_ipa = us.find('span', attrs={'class': 'ipa'})
-    return res + 'US ' + '/' + us_ipa.get_text() + '/\n'
+    return res + color('US ', foreground=34) + '/' + us_ipa.get_text() + '/\n'
 
 
 def get_sense_block_title(sense_block):
@@ -44,7 +63,7 @@ def get_sense_block_title(sense_block):
         pos = block.find('span', attrs={'class': 'pos'})
         guideword = block.find('span', attrs={'class': 'guideword'})
         sub_word = guideword.find('span')
-        return '[' + sub_word.get_text() + '] ' + pos.get_text() +  '\n'
+        return '[' + sub_word.get_text() + '] ' + pos.get_text() + '\n'
 
 
 def get_dictionary(args):
@@ -55,10 +74,12 @@ def get_dictionary(args):
     :param args:
     :return:
     """
-    raw_html = load(args.word, args.translation)
+    raw_html = load(args.word, translation[args.translation])
     parsed_html = BeautifulSoup(raw_html, features='html.parser')
-    dictionary = parsed_html.body.find('div', attrs={'class': 'dictionary', 'data-id': args.dictionary})
-    if args.translation == 'english-chinese-traditional':
+    dictionary = parsed_html.body.find('div', attrs={'class': 'dictionary'})
+    if args.dictionary:
+        dictionary = parsed_html.body.find('div', attrs={'class': 'dictionary', 'data-id': args.dictionary})
+    if translation[args.translation] == 'english-chinese-traditional':  # for chinese
         dictionary = parsed_html.body.find('div', attrs={'class': 'entry-body'})
     if not dictionary:
         print 'No result for ' + args.word
@@ -78,7 +99,7 @@ def get_def_block(sense_block):
         def_body = d.find('span', attrs={'class': 'def-body'})
         trans = def_body.find('span', attrs={'class': 'trans'}, recursive=False)
         examps = def_body.findAll('span', attrs={'class': 'eg'})
-        res += '* ' + definition.get_text() + '\n'
+        res += color('* ' + definition.get_text()) + '\n'
         if trans:
             res += '  ' + trans.get_text() + '\n'
         res += ''.join(['  - ' + e.get_text().strip() + '\n' for e in examps])
@@ -86,12 +107,17 @@ def get_def_block(sense_block):
 
 
 def get_args():
-    parser = argparse.ArgumentParser(description='A linux terminal dictionary based on cambridge online dictionary')
+    parser = argparse.ArgumentParser(description='A linux online terminal dictionary based on cambridge dictionary',
+                                     formatter_class=RawTextHelpFormatter)
     parser.add_argument('-w', '--word', required=True, action='store', help='the word you want to look up')
-    parser.add_argument('-d', '--dictionary', action='store', default='cald4',
-                        help="to specific a dictiontry, defult(cambridge_advanced_learners_dictionary_and_thesaurus = 'cald4')")
     parser.add_argument('-t', '--translation', action='store', default='english',
-                        help='prefered language, defult(english explaination)')
+                        help="Prefered language to explain. Defult(english explaination)\n"
+                             "'english' for english explaination.\n"
+                             "'chinese' for english-chinese-traditional translation.")
+    parser.add_argument('-d', '--dictionary', action='store',
+                        help="To specific a dictiontry. But note that these dictionary only work for english explaination.\n"
+                             "'cald4' for cambridge_advanced_learners_dictionary_and_thesaurus. \n"
+                             "'cacd' for cambridge_academic_content_dictionary.")
     args = parser.parse_args()
     return args
 
