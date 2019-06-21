@@ -42,14 +42,17 @@ def parse_pronunciation(dictionary):
     gcs = header.find('span', attrs={'class': 'gcs'})
     uk = header.find('span', attrs={'class': 'uk'})
     us = header.find('span', attrs={'class': 'us'})
-    res += pos.get_text() + ' '
+    if pos:
+        res += pos.get_text() + ' '
     if gcs:
         res += '[' + gcs.get_text().strip() + ']' + ' '
     if uk:
         uk_ipa = uk.find('span', attrs={'class': 'ipa'})
         res += color('UK ', foreground=34) + '/' + uk_ipa.get_text() + '/ '
-    us_ipa = us.find('span', attrs={'class': 'ipa'})
-    return res + color('US ', foreground=34) + '/' + us_ipa.get_text() + '/\n'
+    if us:
+        us_ipa = us.find('span', attrs={'class': 'ipa'})
+        res += color('US ', foreground=34) + '/' + us_ipa.get_text() + '/ '
+    return res + '\n'
 
 
 def get_sense_block_title(sense_block):
@@ -80,6 +83,7 @@ def get_dictionary(args):
     if args.dictionary:
         dictionary = parsed_html.body.find('div', attrs={'class': 'dictionary', 'data-id': args.dictionary})
     if translation[args.translation] == 'english-chinese-traditional':  # for chinese
+        # like word 'a ,b or c', it will get all entry-body instead of the first one, just use entry may slove this issue.
         dictionary = parsed_html.body.find('div', attrs={'class': 'entry-body'})
     if not dictionary:
         print 'No result for ' + args.word
