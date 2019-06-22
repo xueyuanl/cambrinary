@@ -1,7 +1,11 @@
 # Usage
-use python 2.7 env, and look up 'world' for example:
+use python 3 env, to install package dependencies using pip3, run:
 ```
-python cambrinary.py -w world
+pip3 install -r requirements.txt
+```
+and look up 'world' for example:
+```
+python3 cambrinary.py -w world
 ```
 or you can in chinese(traditional)
 ```

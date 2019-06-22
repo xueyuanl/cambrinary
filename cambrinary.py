@@ -1,7 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import argparse
-import urllib2
 from argparse import RawTextHelpFormatter
+from urllib import request
 
 from bs4 import BeautifulSoup
 
@@ -10,7 +10,7 @@ translation = {'english': 'english', 'chinese': 'english-chinese-traditional'}
 
 def load(word, translation):
     url = 'https://dictionary.cambridge.org/dictionary/' + translation + '/' + word
-    response = urllib2.urlopen(url)
+    response = request.urlopen(url)
     html = response.read()
     return html
 
@@ -86,7 +86,7 @@ def get_dictionary(args):
         # like word 'a ,b or c', it will get all entry-body instead of the first one, just use entry may slove this issue.
         dictionary = parsed_html.body.find('div', attrs={'class': 'entry-body'})
     if not dictionary:
-        print 'No result for ' + args.word
+        print('No result for ' + args.word)
         exit()
     return dictionary
 
@@ -97,16 +97,18 @@ def get_def_block(sense_block):
     if block_title:
         res += block_title
     sense_body = sense_block.find('div', attrs={'class': 'sense-body'})
-    def_block_list = sense_body.findAll('div', attrs={'class': 'def-block pad-indent'})
-    for d in def_block_list:
+    def_block_pad_indent_list = sense_body.findAll('div', attrs={'class': 'def-block pad-indent'})
+    for d in def_block_pad_indent_list:
         definition = d.find('b', attrs={'class': 'def'})
-        def_body = d.find('span', attrs={'class': 'def-body'})
-        trans = def_body.find('span', attrs={'class': 'trans'}, recursive=False)
-        examps = def_body.findAll('span', attrs={'class': 'eg'})
         res += color('* ' + definition.get_text()) + '\n'
-        if trans:
-            res += '  ' + trans.get_text() + '\n'
-        res += ''.join(['  - ' + e.get_text().strip() + '\n' for e in examps])
+        def_body = d.find('span', attrs={'class': 'def-body'})
+        if def_body:
+            trans = def_body.find('span', attrs={'class': 'trans'}, recursive=False)
+            examps = def_body.findAll('span', attrs={'class': 'eg'})
+            if trans:
+                res += '  ' + trans.get_text() + '\n'
+            if examps:
+                res += ''.join(['  - ' + e.get_text().strip() + '\n' for e in examps])
     return res
 
 
@@ -138,7 +140,7 @@ def main():
         sense_block_list = el.findAll('div', attrs={'class': 'sense-block'})  # one block for one meaning group.
         for i, block in enumerate(sense_block_list):
             res += get_def_block(block)
-    print res
+    print(res)
 
 
 if __name__ == '__main__':
