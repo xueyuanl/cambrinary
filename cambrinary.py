@@ -27,7 +27,21 @@ def color(s, formatting=0, foreground=36, background=49):
     """
     pre = '\033['
     post = '\033[0m'
-    return pre + str(formatting) + ';' + str(foreground) + ';' + str(background) + 'm' + s + post
+    return '{}{};{};{}m{}{}'.format(pre, formatting, foreground, background, s, post)
+
+
+def parse_xref(xref, indent=4):
+    """
+    parse things like synonym, idioms
+    :param xref: synonym or idioms object
+    :param indent:
+    :return: parsed string
+    """
+    res = ''
+    items = xref.findAll('div', attrs={'class': 'item'})
+    for i in items:
+        res += '{}{}\n'.format('' * indent, i.get_text())
+    return res
 
 
 def parse_pronunciation(dictionary):
@@ -43,15 +57,15 @@ def parse_pronunciation(dictionary):
     uk = header.find('span', attrs={'class': 'uk'})
     us = header.find('span', attrs={'class': 'us'})
     if pos:
-        res += pos.get_text() + ' '
+        res += '{} '.format(pos.get_text())
     if gcs:
-        res += '[' + gcs.get_text().strip() + ']' + ' '
+        res += '[{}] '.format(gcs.get_text().strip())
     if uk:
         uk_ipa = uk.find('span', attrs={'class': 'ipa'})
-        res += color('UK ', foreground=34) + '/' + uk_ipa.get_text() + '/ '
+        res += '{} /{}/ '.format(color('UK', foreground=34), uk_ipa.get_text())
     if us:
         us_ipa = us.find('span', attrs={'class': 'ipa'})
-        res += color('US ', foreground=34) + '/' + us_ipa.get_text() + '/ '
+        res += '{} /{}/ '.format(color('US', foreground=34), us_ipa.get_text())
     return res + '\n'
 
 
@@ -66,7 +80,7 @@ def get_sense_block_title(sense_block):
         pos = block.find('span', attrs={'class': 'pos'})
         guideword = block.find('span', attrs={'class': 'guideword'})
         sub_word = guideword.find('span')
-        return '[' + sub_word.get_text() + '] ' + pos.get_text() + '\n'
+        return '[{}] {}\n'.format(sub_word.get_text(), pos.get_text())
 
 
 def get_dictionary(args):
@@ -92,6 +106,7 @@ def get_dictionary(args):
 
 
 def get_def_block(sense_block):
+    args = get_args()
     res = ''
     block_title = get_sense_block_title(sense_block)
     if block_title:
@@ -106,9 +121,15 @@ def get_def_block(sense_block):
             trans = def_body.find('span', attrs={'class': 'trans'}, recursive=False)
             examps = def_body.findAll('span', attrs={'class': 'eg'})
             if trans:
-                res += '  ' + trans.get_text() + '\n'
+                res += '  {}\n'.format(trans.get_text())
             if examps:
                 res += ''.join(['  - ' + e.get_text().strip() + '\n' for e in examps])
+            if args.synonym:
+                synonym = def_body.find('div', attrs={'class': 'xref synonym'})
+                if synonym:
+                    res += color('  Synonym', foreground=36) + '\n'
+                    res += parse_xref(synonym)
+
     return res
 
 
@@ -124,6 +145,7 @@ def get_args():
                         help="To specific a dictiontry. But note that these dictionary only work for english explaination.\n"
                              "'cald4' for cambridge_advanced_learners_dictionary_and_thesaurus. \n"
                              "'cacd' for cambridge_academic_content_dictionary.")
+    parser.add_argument('-s', '--synonym', action="store_true", help='show the synonym of the word if has')
     args = parser.parse_args()
     return args
 
