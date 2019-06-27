@@ -90,14 +90,14 @@ def parse_pronunciation(link, trans):
             res += '{} /{}/ '.format(color('US', foreground=34), us_ipa.get_text())
     if trans == DE:
         di_info = link.find('span', attrs={'class': 'di-info'})
-
-        pos = di_info.find('span', attrs={'class': 'pos'})
-        ipa = di_info.find('span', attrs={'class': 'ipa'})
-        if pos:
-            res += '{}'.format(pos.get_text())
-        if ipa:
-            res += ' /{}/ '.format(ipa.get_text())
-    return res + '\n'
+        if di_info:  # like look-up has no pronunciation
+            pos = di_info.find('span', attrs={'class': 'pos'})
+            ipa = di_info.find('span', attrs={'class': 'ipa'})
+            if pos:
+                res += '{}'.format(pos.get_text())
+            if ipa:
+                res += ' /{}/ '.format(ipa.get_text())
+    return res if res == '' else res + '\n'
 
 
 def get_sense_block_title(sense_block):
