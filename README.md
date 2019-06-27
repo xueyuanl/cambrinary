@@ -9,11 +9,17 @@ python3 cambrinary.py -w world
 ```
 ![word hello](./images/hello)
 
-or you can in chinese(traditional)
+multi-languages support:
+in chinese(traditional)
 ```
 python cambrinary.py -w world -t chinese
 ```
 ![word world](./images/world)
+
+in german
+```
+python cambrinary.py -w world -t german
+```
 
 # Help
 ```
