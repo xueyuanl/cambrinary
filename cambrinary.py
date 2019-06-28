@@ -9,7 +9,9 @@ from country_const import *
 
 translation = {GB: 'english',
                CN: 'english-chinese-traditional',
-               DE: 'english-german'}
+               DE: 'english-german',
+               JP: 'english-japanese',
+               FR: 'english-french'}
 
 
 def get_args():
@@ -65,31 +67,33 @@ def parse_xref(xref, indent=4):
     return res
 
 
-def parse_pronunciation(link, trans):
+def parse_pronunciation(word_class, trans):
     """
     retrive the pronunciation for the word
-    :param link:
+    :param word_class:
     :return: string
     """
     res = ''
     if trans == GB or trans == CN:
-        header = link.find('div', attrs={'class': 'pos-header'})
+        header = word_class.find('div', attrs={'class': 'pos-header'})
+
         pos = header.find('span', attrs={'class': 'pos'})
         gcs = header.find('span', attrs={'class': 'gcs'})
-        uk = header.find('span', attrs={'class': 'uk'})
-        us = header.find('span', attrs={'class': 'us'})
         if pos:
             res += '{} '.format(pos.get_text())
         if gcs:
             res += '[{}] '.format(gcs.get_text().strip())
-        if uk:
-            uk_ipa = uk.find('span', attrs={'class': 'ipa'})
-            res += '{} /{}/ '.format(color('UK', foreground=34), uk_ipa.get_text())
-        if us:
-            us_ipa = us.find('span', attrs={'class': 'ipa'})
-            res += '{} /{}/ '.format(color('US', foreground=34), us_ipa.get_text())
-    if trans == DE:
-        di_info = link.find('span', attrs={'class': 'di-info'})
+        prons = header.findAll('span', recursive=False)
+        for p in prons:
+            region = p.find('span', attrs={'class': 'region'})
+            lab = p.find('span', attrs={'class': 'lab'})
+            ipa = p.find('span', attrs={'class': 'ipa'})
+            if region and ipa:
+                res += '{} {}/{}/ '.format(
+                    color(region.get_text().upper(), foreground=34), lab.get_text().upper() + ' ' if lab else '',
+                    ipa.get_text())
+    if trans == DE or trans == FR:
+        di_info = word_class.find('span', attrs={'class': 'di-info'})
         if di_info:  # like look-up has no pronunciation
             pos = di_info.find('span', attrs={'class': 'pos'})
             ipa = di_info.find('span', attrs={'class': 'ipa'})
@@ -97,6 +101,23 @@ def parse_pronunciation(link, trans):
                 res += '{}'.format(pos.get_text())
             if ipa:
                 res += ' /{}/ '.format(ipa.get_text())
+    if trans == JP:
+        header = word_class.find('div', attrs={'class': 'pos-head'})
+        if not header:  # word look-up in japanese
+            header = word_class.find('span', attrs={'class': 'di-info'})
+        pos = header.find('span', attrs={'class': 'pos'})
+        gcs = header.find('span', attrs={'class': 'gcs'})
+        pron_info_list = header.findAll('span', attrs={'class': 'pron-info'})
+        if pos:
+            res += '{} '.format(pos.get_text())
+        if gcs:
+            res += '[{}] '.format(gcs.get_text().strip())
+        if pron_info_list:
+            for pron in pron_info_list:
+                region = pron.find('span', attrs={'class': 'region'})
+                ipa = pron.find('span', attrs={'class': 'ipa'})
+                if region and ipa:
+                    res += '{} /{}/ '.format(color(region.get_text().upper(), foreground=34), ipa.get_text())
     return res if res == '' else res + '\n'
 
 
@@ -111,7 +132,7 @@ def get_sense_block_title(sense_block):
         pos = block.find('span', attrs={'class': 'pos'})
         guideword = block.find('span', attrs={'class': 'guideword'})
         sub_word = guideword.find('span')
-        return '[{}] {}\n'.format(sub_word.get_text(), pos.get_text())
+        return '[{}] {}\n'.format(sub_word.get_text(), pos.get_text() if pos else '')
 
 
 def get_dictionary(args):
@@ -154,7 +175,8 @@ def get_def_block(sense_block):
     def_block_pad_indent_list = sense_body.findAll('div', attrs={'class': 'def-block pad-indent'})
     for d in def_block_pad_indent_list:
         definition = d.find('b', attrs={'class': 'def'})
-        res += color('* ' + definition.get_text()) + '\n'
+        if definition:
+            res += color('* ' + definition.get_text()) + '\n'
         def_body = d.find('span', attrs={'class': 'def-body'})
         if not def_body:
             def_body = d.find('div', attrs={'class': 'def-body'})  # german dictionary use div tag
@@ -162,7 +184,7 @@ def get_def_block(sense_block):
             trans = def_body.find('span', attrs={'class': 'trans'}, recursive=False)
             examps = def_body.findAll('span', attrs={'class': 'eg'})
             if trans:
-                res += '  {}\n'.format(trans.get_text())
+                res += '  {}\n'.format(trans.get_text().strip())
             if examps:
                 res += ''.join(['  - ' + e.get_text().strip() + '\n' for e in examps])
             if args.synonym:
@@ -186,6 +208,13 @@ def get_word_class(dict, trans):
     if trans == DE:
         return dict.findAll('div', attrs={
             'class': 'di english-german kdict entry-body__el entry-body__el--smalltop clrd js-share-holder'})
+    if trans == JP:
+        return dict.findAll('div',
+                            attrs={'class': 'di $dict entry-body__el entry-body__el--smalltop clrd js-share-holder'})
+    if trans == FR:
+        return dict.findAll('div',
+                            attrs={
+                                'class': 'di english-french kdict entry-body__el entry-body__el--smalltop clrd js-share-holder'})
 
 
 def main():
