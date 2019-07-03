@@ -12,7 +12,8 @@ translation = {GB: 'english',
                DE: 'english-german',
                JP: 'english-japanese',
                FR: 'english-french',
-               RU: 'english-russian'}
+               RU: 'english-russian',
+               IT: 'english-italian'}
 
 
 def get_args():
@@ -21,8 +22,8 @@ def get_args():
     parser.add_argument('-w', '--word', required=True, action='store', help='the word you want to look up')
     parser.add_argument('-t', '--translation', action='store', default='english',
                         help="Prefered language to explain. Defult(english explaination)\n"
-                             "'english' for english explaination.\n"
-                             "'chinese' for english-chinese-traditional translation.")
+                             "Supported language:\n"
+                             "{}".format(''.join(['- ' + lang + '\n' for lang in SUPPORT_LANG])))
     parser.add_argument('-d', '--dictionary', action='store',
                         help="To specific a dictiontry. But note that these dictionary only work for english explaination.\n"
                              "'cald4' for cambridge_advanced_learners_dictionary_and_thesaurus. \n"
@@ -102,7 +103,7 @@ def parse_pronunciation(word_class, trans):
                 res += '{}'.format(pos.get_text())
             if ipa:
                 res += ' /{}/ '.format(ipa.get_text())
-    if trans == JP:
+    if trans == JP or trans == IT:
         header = word_class.find('div', attrs={'class': 'pos-head'})
         if not header:  # word look-up in japanese
             header = word_class.find('span', attrs={'class': 'di-info'})
@@ -160,12 +161,14 @@ def get_sense_block_title(sense_block):
 
 def get_dictionary(args):
     """
-    chose which specific dictionary would be used:
-    cambridge_advanced_learners_dictionary_and_thesaurus = 'cald4'
-    cambridge_academic_content_dictionary = 'cacd'
+    retrive dictionary body.
     :param args:
     :return:
     """
+    if args.translation not in translation:
+        print('Not support in {} translation. Supported languages are:\n{}'.format(args.translation, ''.join(
+            ['- ' + lang + '\n' for lang in SUPPORT_LANG])))
+        exit()
     raw_html = load(args.word, translation[args.translation])
     parsed_html = BeautifulSoup(raw_html, features='html.parser')
     # this area contains all the dictionaries
@@ -238,10 +241,14 @@ def get_word_class(dict, trans):
         return dict.findAll('div',
                             attrs={
                                 'class': 'di english-french kdict entry-body__el entry-body__el--smalltop clrd js-share-holder'})
-    if trans == RU:
+    if trans == RU or IT:
         res = dict.findAll('div', attrs={'class': 'di $ entry-body__el entry-body__el--smalltop clrd js-share-holder'})
-        return res if res else dict.findAll('div', attrs={
+        if res:
+            return res
+        res = dict.findAll('div', attrs={
             'class': 'di $dict entry-body__el entry-body__el--smalltop clrd js-share-holder'})  # for look-up case
+        if res:
+            return res
 
 
 def main():
