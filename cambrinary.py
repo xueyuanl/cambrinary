@@ -11,7 +11,8 @@ translation = {GB: 'english',
                CN: 'english-chinese-traditional',
                DE: 'english-german',
                JP: 'english-japanese',
-               FR: 'english-french'}
+               FR: 'english-french',
+               RU: 'english-russian'}
 
 
 def get_args():
@@ -118,6 +119,21 @@ def parse_pronunciation(word_class, trans):
                 ipa = pron.find('span', attrs={'class': 'ipa'})
                 if region and ipa:
                     res += '{} /{}/ '.format(color(region.get_text().upper(), foreground=34), ipa.get_text())
+    if trans == RU:
+        header = word_class.find('span', attrs={'class': 'di-info'})
+        pos = header.find('span', attrs={'class': 'pos'})
+        gcs = header.find('span', attrs={'class': 'gcs'})
+        pron_info_list = header.findAll('span', attrs={'class': 'pron-info'})
+        if pos:
+            res += '{} '.format(pos.get_text())
+        if gcs:
+            res += '[{}] '.format(gcs.get_text().strip())
+        if pron_info_list:
+            for pron in pron_info_list:
+                region = pron.find('span', attrs={'class': 'region'})
+                ipa = pron.find('span', attrs={'class': 'ipa'})
+                if region and ipa:
+                    res += '{} /{}/ '.format(color(region.get_text().upper(), foreground=34), ipa.get_text())
     return res if res == '' else res + '\n'
 
 
@@ -127,12 +143,19 @@ def get_sense_block_title(sense_block):
     :param sense_block: html element BeautifulSoup object
     :return: string
     """
-    block = sense_block.find('h3', attrs={'class': 'txt-block txt-block--alt2'})
-    if block:
-        pos = block.find('span', attrs={'class': 'pos'})
-        guideword = block.find('span', attrs={'class': 'guideword'})
+    txt_block = sense_block.find('h3', attrs={'class': 'txt-block txt-block--alt2'})
+    if txt_block:
+        pos = txt_block.find('span', attrs={'class': 'pos'})
+        guideword = txt_block.find('span', attrs={'class': 'guideword'})
         sub_word = guideword.find('span')
-        return '[{}] {}\n'.format(sub_word.get_text(), pos.get_text() if pos else '')
+        return '{} {}\n'.format(color('[' + sub_word.get_text() + ']', 1, 39, 39), pos.get_text() if pos else '')
+    # case for russian, words like 'get'
+    sense_head = sense_block.find('span', attrs={'class': 'sense-head'})
+    if sense_head:
+        guideword = sense_head.find('strong', attrs={'class': 'gw'})
+        gc = sense_head.find('span', attrs={'class': 'gc'})
+        return '{} {}\n'.format(color(guideword.get_text(), 1, 39, 49),
+                                color('[' + gc.get_text() + ']', 2, 39, 49) if gc else '')
 
 
 def get_dictionary(args):
@@ -215,6 +238,10 @@ def get_word_class(dict, trans):
         return dict.findAll('div',
                             attrs={
                                 'class': 'di english-french kdict entry-body__el entry-body__el--smalltop clrd js-share-holder'})
+    if trans == RU:
+        res = dict.findAll('div', attrs={'class': 'di $ entry-body__el entry-body__el--smalltop clrd js-share-holder'})
+        return res if res else dict.findAll('div', attrs={
+            'class': 'di $dict entry-body__el entry-body__el--smalltop clrd js-share-holder'})  # for look-up case
 
 
 def main():

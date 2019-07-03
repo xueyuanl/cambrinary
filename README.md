@@ -26,6 +26,7 @@ python3 cambrinary.py -w world -t german
 - german
 - chinese
 - japanese
+- russian
 ### Support phrase
 ```
 python3 cambrinary.py -w kick-off
