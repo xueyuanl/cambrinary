@@ -1,0 +1,39 @@
+{
+  "color_scheme": {
+    "_for_example": [
+      "first for formatting",
+      "second for foreground",
+      "third for background"
+    ],
+    "pron_region": [
+      "default",
+      "blue",
+      "default"
+    ],
+    "pronunciation": [
+      "default",
+      "default",
+      "default"
+    ],
+    "guidword": [
+      "default",
+      "default",
+      "default"
+    ],
+    "definition": [
+      "default",
+      "cyan",
+      "default"
+    ],
+    "trans_definition": [
+      "default",
+      "default",
+      "default"
+    ],
+    "example_sentence": [
+      "default",
+      "default",
+      "default"
+    ]
+  }
+}

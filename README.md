@@ -36,6 +36,12 @@ or
 ```
 python3 cambrinary.py -w kick-off -t japanese
 ```
+### Customize your color scheme
+Your cambrinary, you design.
+
+Use [conf.json](conf.json) to customize the color scheme, for instance,
+setting `pronunciation`, `definition` or `example_sentence` as you like. They could be in `bold` format, `blue` foreground  and `black` blackground, or any supported format and colors.
+All supported color please refer to [color_const.py](color_const.py).
 # Help
 ```
 python3 cambrinary.py --help
