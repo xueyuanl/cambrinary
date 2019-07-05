@@ -15,12 +15,7 @@ in chinese(traditional)
 python3 cambrinary.py -w world -t chinese
 ```
 ![word world](./images/world)
-
-in german
-```
-python3 cambrinary.py -w world -t german
-```
-### Supported language list
+#### Supported language list
 - english
 - french
 - german
@@ -28,6 +23,21 @@ python3 cambrinary.py -w world -t german
 - japanese
 - russian
 - italian
+
+### multi-words support
+support as many as words you like,
+```
+python3 cambrinary.py -w hello word
+```
+or
+```
+python3 cambrinary.py -w hello word -t chinese
+```
+even or more
+```
+python3 cambrinary.py -w one two three four five -t french
+```
+
 ### Support phrase
 ```
 python3 cambrinary.py -w kick-off

@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import argparse
+import threading
 from argparse import RawTextHelpFormatter
+from collections import OrderedDict
 from urllib import request
 
 from bs4 import BeautifulSoup
@@ -22,7 +24,7 @@ colors = Color()
 def get_args():
     parser = argparse.ArgumentParser(description='A linux online terminal dictionary based on cambridge dictionary',
                                      formatter_class=RawTextHelpFormatter)
-    parser.add_argument('-w', '--word', required=True, action='store', help='the word you want to look up')
+    parser.add_argument('-w', '--word', required=True, nargs='+', action='store', help='the word you want to look up')
     parser.add_argument('-t', '--translation', action='store', default='english',
                         help="Prefered language to explain. Defult(english explaination)\n"
                              "Supported language:\n"
@@ -162,27 +164,28 @@ def get_sense_block_title(sense_block):
         return '{} {}\n'.format(colors.guidword(guideword.get_text()), '[' + gc.get_text() + ']' if gc else '')
 
 
-def get_dictionary(args):
+def get_dictionary(word, trans, dictionary):
     """
     retrive dictionary body.
-    :param args:
+    :param word:
+    :param trans:
+    :param dictionary:
     :return:
     """
-    if args.translation not in translation:
-        print('Not support in {} translation. Supported languages are:\n{}'.format(args.translation, ''.join(
+    if trans not in translation:
+        print('Not support in {} translation. Supported languages are:\n{}'.format(trans, ''.join(
             ['- ' + lang + '\n' for lang in SUPPORT_LANG])))
         exit()
-    raw_html = load(args.word, translation[args.translation])
+    raw_html = load(word, translation[trans])
     parsed_html = BeautifulSoup(raw_html, features='html.parser')
     # this area contains all the dictionaries
     cdo_dblclick_area = parsed_html.body.find('div', attrs={'class': 'cdo-dblclick-area'})
     if not cdo_dblclick_area:
-        print('No result for ' + args.word)
-        exit()
+        return
     res_dict = None
     # get a custom dictionary
-    if args.dictionary:
-        res_dict = cdo_dblclick_area.find('div', attrs={'class': 'dictionary', 'data-id': args.dictionary})
+    if dictionary:
+        res_dict = cdo_dblclick_area.find('div', attrs={'class': 'dictionary', 'data-id': dictionary})
     if not res_dict:  # cannot retrieve a specific dict even if a given args.dictionary
         # multi-dictionary or one entry-body
         dictionaries = cdo_dblclick_area.findAll('div', attrs={'class': 'dictionary'})
@@ -254,19 +257,45 @@ def get_word_class(dict, trans):
             return res
 
 
-def main():
-    args = get_args()
-    dictionary = get_dictionary(args)
-    word_class_list = get_word_class(dictionary, args.translation)
-
+def look_up(word, trans, dictionary, results):
+    dictionary = get_dictionary(word, trans, dictionary)
+    if not dictionary:
+        results[word] = 'No result for {}'.format(word)
+        return
+    word_class_list = get_word_class(dictionary, trans)
     res = ''
     for w in word_class_list:
-        pronunciation = parse_pronunciation(w, args.translation)
+        pronunciation = parse_pronunciation(w, trans)
         res += pronunciation
         sense_block_list = w.findAll('div', attrs={'class': 'sense-block'})  # one block for one meaning group.
         for i, block in enumerate(sense_block_list):
             res += get_def_block(block)
-    print(res)
+    results[word] = res
+
+
+def main():
+    args = get_args()
+    threading.Thread()
+    return_dict = OrderedDict()
+    for w in args.word:
+        t = threading.Thread(target=look_up, name=w, args=(w, args.translation, args.dictionary, return_dict,))
+        t.start()
+        t.join()
+
+    # using multiprocessing is almost the same time consume under around 7 words test, about 16 second.
+    # also, the manager.dict() is a disorder dict not as good as the OrderedDict()
+    # import multiprocessing
+    # manager = multiprocessing.Manager()
+    # return_dict = manager.dict()
+    # for w in args.word:
+    #     p = multiprocessing.Process(target=look_up, name=w, args=(w, args.translation, args.dictionary, return_dict,))
+    #     p.start()
+    #     p.join()
+
+    for word, res in return_dict.items():
+        if len(return_dict) > 1:
+            print('------{}------'.format(word))
+        print(res)
 
 
 if __name__ == '__main__':
