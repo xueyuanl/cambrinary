@@ -55,7 +55,14 @@ class Color(object):
         self.conf = Conf.to_obj(self.conf_json)
         self.color_scheme = self.conf.color_scheme
 
-    def color(self, s, color_scheme):
+    @staticmethod
+    def color(s, color_scheme):
+        """
+        for reference: https://misc.flogisoft.com/bash/tip_colors_and_formatting
+        :param s: str to color
+        :param color_scheme: refer it in `color_const.py`
+        :return: colored str
+        """
         pre = '\033['
         post = '\033[0m'
         return '{}{};{};{}m{}{}'.format(pre, format_dic[color_scheme[0]], foreground_dic[color_scheme[1]],
