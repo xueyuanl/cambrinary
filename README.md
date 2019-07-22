@@ -1,5 +1,5 @@
 # Usage
-use python 3 env, to install package dependencies using pip3, run:
+In python3 and the version must be 3.5.3 or later. to install package dependencies using pip3, run:
 ```
 pip3 install -r requirements.txt
 ```
@@ -25,7 +25,7 @@ python3 cambrinary.py -w world -t chinese
 - italian
 
 ### multi-words support
-support as many as words you like,
+powered by coroutine, support as many as words you like,
 ```
 python3 cambrinary.py -w hello word
 ```

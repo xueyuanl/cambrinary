@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 import argparse
-import threading
+import asyncio
 from argparse import RawTextHelpFormatter
 from collections import OrderedDict
-from urllib import request
 
+import aiohttp
 from bs4 import BeautifulSoup
 
 from country_const import *
@@ -38,11 +38,15 @@ def get_args():
     return args
 
 
-def load(word, trans):
+async def load(word, trans):
     url = 'https://dictionary.cambridge.org/dictionary/' + trans + '/' + word
-    response = request.urlopen(url)
-    html = response.read()
-    return html
+    async with aiohttp.request('GET', url) as resp:
+        html = await resp.text()
+        return html
+    # from urllib import request
+    # response = request.urlopen(url)
+    # html = response.read()
+    # return html
 
 
 def parse_xref(xref, indent=4):
@@ -155,20 +159,14 @@ def get_sense_block_title(sense_block):
         return '{} {}\n'.format(colors.guidword(guideword.get_text()), '[' + gc.get_text() + ']' if gc else '')
 
 
-def get_dictionary(word, trans, dictionary):
+def get_dictionary(html, dictionary):
     """
     retrive dictionary body.
-    :param word:
-    :param trans:
+    :param html:
     :param dictionary:
     :return:
     """
-    if trans not in translation:
-        print('Not support in {} translation. Supported languages are:\n{}'.format(trans, ''.join(
-            ['- ' + lang + '\n' for lang in SUPPORT_LANG])))
-        exit()
-    raw_html = load(word, translation[trans])
-    parsed_html = BeautifulSoup(raw_html, features='html.parser')
+    parsed_html = BeautifulSoup(html, features='html.parser')
     # this area contains all the dictionaries
     cdo_dblclick_area = parsed_html.body.find('div', attrs={'class': 'cdo-dblclick-area'})
     if not cdo_dblclick_area:
@@ -246,8 +244,14 @@ def get_word_class(dict, trans):
             return res
 
 
-def look_up(word, trans, dictionary, results):
-    dictionary = get_dictionary(word, trans, dictionary)
+async def look_up(word, trans, dict, results):
+    if trans not in translation:
+        print('Not support in {} translation. Supported languages are:\n{}'.format(trans, ''.join(
+            ['- ' + lang + '\n' for lang in SUPPORT_LANG])))
+        exit()
+
+    html = await load(word, translation[trans])
+    dictionary = get_dictionary(html, dict)
     if not dictionary:
         results[word] = 'No result for {}'.format(word)
         return
@@ -267,12 +271,21 @@ def look_up(word, trans, dictionary, results):
 
 def main():
     args = get_args()
-    threading.Thread()
     return_dict = OrderedDict()
+    loop = asyncio.get_event_loop()
+    tasks = []
+
     for w in args.word:
-        t = threading.Thread(target=look_up, name=w, args=(w, args.translation, args.dictionary, return_dict,))
-        t.start()
-        t.join()
+        return_dict[w] = None  # guarantee the orders
+        tasks.append(look_up(w, args.translation, args.dictionary, return_dict))
+    loop.run_until_complete(asyncio.wait(tasks))
+
+    # threading.Thread()
+    # return_dict = OrderedDict()
+    # for w in args.word:
+    #     t = threading.Thread(target=look_up, name=w, args=(w, args.translation, args.dictionary, return_dict,))
+    #     t.start()
+    #     t.join()
 
     # using multiprocessing is almost the same time consume under around 7 words test, about 16 second.
     # also, the manager.dict() is a disorder dict not as good as the OrderedDict()
@@ -291,4 +304,7 @@ def main():
 
 
 if __name__ == '__main__':
+    # now = time.time()
     main()
+    # end = time.time()
+    # print('using time ' + str(end - now))
