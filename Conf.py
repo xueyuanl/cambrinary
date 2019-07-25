@@ -29,31 +29,28 @@ class ColorScheme(object):
         return json_dic
 
     @staticmethod
-    def to_obj(color_scheme_json):
-        return ColorScheme(color_scheme_json['pron_region'], color_scheme_json['definition'],
-                           color_scheme_json['example_sentence'], color_scheme_json['trans_definition'],
-                           color_scheme_json['pronunciation'], color_scheme_json['guidword'])
+    def to_obj(color_scheme_dict):
+        return ColorScheme(color_scheme_dict['pron_region'], color_scheme_dict['definition'],
+                           color_scheme_dict['example_sentence'], color_scheme_dict['trans_definition'],
+                           color_scheme_dict['pronunciation'], color_scheme_dict['guidword'])
 
 
 class Conf(object):
-    def __init__(self, color_scheme):
-        self.color_scheme = color_scheme
+    def __init__(self, path):
+        self.conf_dict = load(path)
+        self.color_scheme = ColorScheme.to_obj(self.conf_dict['color_scheme'])
+        self.default_trans_language = self.conf_dict['default_trans_language']
 
     def to_dic(self):
         json_dic = OrderedDict()
         json_dic['color_scheme'] = self.color_scheme
+        json_dic['default_trans_language'] = self.default_trans_language
         return json_dic
-
-    @staticmethod
-    def to_obj(conf_json):
-        return Conf(ColorScheme.to_obj(conf_json['color_scheme']))
 
 
 class Color(object):
-    def __init__(self):
-        self.conf_json = load('conf.json')
-        self.conf = Conf.to_obj(self.conf_json)
-        self.color_scheme = self.conf.color_scheme
+    def __init__(self, color_scheme):
+        self.color_scheme = color_scheme
 
     @staticmethod
     def color(s, color_scheme):
@@ -85,3 +82,7 @@ class Color(object):
 
     def guidword(self, str):
         return self.color(str, self.color_scheme.guidword)
+
+
+conf = Conf('conf.json')
+colors = Color(conf.color_scheme)

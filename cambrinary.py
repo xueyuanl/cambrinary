@@ -2,7 +2,6 @@
 import argparse
 import asyncio
 from argparse import RawTextHelpFormatter
-from collections import OrderedDict
 
 import aiohttp
 from bs4 import BeautifulSoup
@@ -18,14 +17,12 @@ translation = {GB: 'english',
                RU: 'english-russian',
                IT: 'english-italian'}
 
-colors = Color()
-
 
 def get_args():
     parser = argparse.ArgumentParser(description='A linux online terminal dictionary based on cambridge dictionary',
                                      formatter_class=RawTextHelpFormatter)
     parser.add_argument('-w', '--word', required=True, nargs='+', action='store', help='the word you want to look up')
-    parser.add_argument('-t', '--translation', action='store', default='english',
+    parser.add_argument('-t', '--translation', action='store',
                         help="Prefered language to explain. Defult(english explaination)\n"
                              "Supported language:\n"
                              "{}".format(''.join(['- ' + lang + '\n' for lang in SUPPORT_LANG])))
@@ -245,11 +242,6 @@ def get_word_class(dict, trans):
 
 
 async def look_up(word, trans, dict, results):
-    if trans not in translation:
-        print('Not support in {} translation. Supported languages are:\n{}'.format(trans, ''.join(
-            ['- ' + lang + '\n' for lang in SUPPORT_LANG])))
-        exit()
-
     html = await load(word, translation[trans])
     dictionary = get_dictionary(html, dict)
     if not dictionary:
@@ -271,13 +263,20 @@ async def look_up(word, trans, dict, results):
 
 def main():
     args = get_args()
+    trans = conf.default_trans_language
+    if args.translation:
+        if args.translation not in translation:
+            print('Not support in {} translation. Supported languages are:\n{}'.format(args.translation, ''.join(
+                ['- ' + lang + '\n' for lang in SUPPORT_LANG])))
+            exit()
+        trans = args.translation
     return_dict = OrderedDict()
     loop = asyncio.get_event_loop()
     tasks = []
 
     for w in args.word:
         return_dict[w] = None  # guarantee the orders
-        tasks.append(look_up(w, args.translation, args.dictionary, return_dict))
+        tasks.append(look_up(w, trans, args.dictionary, return_dict))
     loop.run_until_complete(asyncio.wait(tasks))
 
     # threading.Thread()

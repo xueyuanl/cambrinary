@@ -1,6 +1,4 @@
-from color import Color
-
-colors = Color()
+from Conf import *
 
 
 class Pron(object):
