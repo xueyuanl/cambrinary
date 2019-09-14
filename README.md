@@ -1,3 +1,4 @@
+### NOTE: the cambridge dictionary website has made a huge change in the front end design, so a lots of HTML tags should be rematched. This could take some times. What you would get deserves to wait :)
 # Usage
 In python3 and the version must be 3.5.3 or later. to install package dependencies using pip3, run:
 ```
