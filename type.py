@@ -29,11 +29,11 @@ class Pronunciation(object):
 
 
 class PadIndent(object):
-    def __init__(self):
-        self.definition = None
-        self.trans = None
-        self.examps = None
-        self.synonym = None
+    def __init__(self, definition=None, trans=None, examps=None, synonym=None):
+        self.definition = definition
+        self.trans = trans
+        self.examps = examps
+        self.synonym = synonym
 
     def to_str(self):
         res = ''
@@ -46,13 +46,13 @@ class PadIndent(object):
         if self.synonym:
             res += '  Synonym' + '\n'
             res += self.synonym
-        return res;
+        return res
 
 
 class SenseBlock(object):
-    def __init__(self):
-        self.title = None
-        self.pad_indents = []
+    def __init__(self, title, pad_indents):
+        self.title = title  # could be None
+        self.pad_indents = pad_indents  # []
 
     def to_str(self):
         res = ''
@@ -64,22 +64,22 @@ class SenseBlock(object):
 
 
 class PartSpeech(object):
-    def __init__(self):
-        self.pronunciation = None
-        self.sense_blocks = []
+    def __init__(self, h_pronunciation, sense_blocks):
+        self.h_pronunciation = h_pronunciation  # header
+        self.sense_blocks = sense_blocks  # body []
 
     def to_str(self):
         res = ''
-        if self.pronunciation:
-            res += self.pronunciation.to_str()
+        if self.h_pronunciation:
+            res += self.h_pronunciation.to_str()
         for s in self.sense_blocks:
             res += s.to_str()
         return res
 
 
 class Word(object):
-    def __init__(self):
-        self.part_speeches = []
+    def __init__(self, part_speeches):
+        self.part_speeches = part_speeches  # [] for example, help is a verb or noun, each of them is a part_speech
 
     def to_str(self):
         res = ''

@@ -18,7 +18,8 @@ from country_const import *
 
 def get_args():
     parser = argparse.ArgumentParser(description='test for cambrinary', formatter_class=RawTextHelpFormatter)
-    parser.add_argument('-t', '--translation', action='store', help="Prefered language to test.")
+    parser.add_argument('-t', '--translation', action='store',
+                        help="Prefered language to test. eg: python3 test/test.py -t")
     args = parser.parse_args()
     return args
 

@@ -7,6 +7,7 @@ import aiohttp
 from bs4 import BeautifulSoup
 
 from country_const import *
+from log import *
 from type import *
 
 translation = {GB: 'english',
@@ -26,10 +27,6 @@ def get_args():
                         help="Prefered language to explain. Defult(english explaination)\n"
                              "Supported language:\n"
                              "{}".format(''.join(['- ' + lang + '\n' for lang in SUPPORT_LANG])))
-    parser.add_argument('-d', '--dictionary', action='store',
-                        help="To specific a dictiontry. But note that these dictionary only work for english explaination.\n"
-                             "'cald4' for cambridge_advanced_learners_dictionary_and_thesaurus. \n"
-                             "'cacd' for cambridge_academic_content_dictionary.")
     parser.add_argument('-s', '--synonym', action="store_true", help='show the synonym of the word if has')
     args = parser.parse_args()
     return args
@@ -60,35 +57,36 @@ def parse_xref(xref, indent=4):
     return res
 
 
-def parse_pronunciation(word_class, trans):
+def parse_pronunciation(part_speech, trans):
     """
-    retrive the pronunciation for the word
-    :param word_class:
-    :return: string
+    retrive the pronunciation from part_speech
+    :param part_speech:
+    :param trans:
+    :return:
     """
     pronunciation = Pronunciation()
     if trans == GB or trans == CN:
-        header = word_class.find('div', attrs={'class': 'pos-header'})
+        header = part_speech.find('div', attrs={'class': 'pos-header'})
 
-        pos = header.find('span', attrs={'class': 'pos'})
+        pos = header.findAll('span', attrs={'class': 'pos'})
         gcs = header.find('span', attrs={'class': 'gcs'})
         if pos:
-            pronunciation.pos = pos.get_text()
+            pronunciation.pos = '{}'.format(', '.join([p.get_text() for p in pos]))
         if gcs:
             pronunciation.gcs = gcs.get_text().strip()
         prons = header.findAll('span', recursive=False)
         res = ''
         for p in prons:
             region = p.find('span', attrs={'class': 'region'})
-            lab = p.find('span', attrs={'class': 'lab'})
+            # lab = p.find('span', attrs={'class': 'lab'})
             ipa = p.find('span', attrs={'class': 'ipa'})
             if region and ipa:
-                res += '{} {}{} '.format(
-                    colors.pron_region(region.get_text().upper()), lab.get_text().upper() + ' ' if lab else '',
+                res += '{} {} '.format(
+                    colors.pron_region(region.get_text().upper()),  # lab.get_text().upper() + ' ' if lab else '',
                     colors.pronunciation('/{}/'.format(ipa.get_text())))
         pronunciation.prons = res
     if trans == DE or trans == FR:
-        di_info = word_class.find('span', attrs={'class': 'di-info'})
+        di_info = part_speech.find('span', attrs={'class': 'di-info'})
         if di_info:  # like look-up has no pronunciation
             pos = di_info.find('span', attrs={'class': 'pos'})
             ipa = di_info.find('span', attrs={'class': 'ipa'})
@@ -97,9 +95,9 @@ def parse_pronunciation(word_class, trans):
             if ipa:
                 pronunciation.prons = colors.pronunciation(' /{}/ '.format(ipa.get_text()))
     if trans == JP or trans == IT:
-        header = word_class.find('div', attrs={'class': 'pos-head'})
+        header = part_speech.find('div', attrs={'class': 'pos-header'})
         if not header:  # word look-up in japanese
-            header = word_class.find('span', attrs={'class': 'di-info'})
+            header = part_speech.find('span', attrs={'class': 'di-info'})
         pos = header.find('span', attrs={'class': 'pos'})
         gcs = header.find('span', attrs={'class': 'gcs'})
         pron_info_list = header.findAll('span', attrs={'class': 'pron-info'})
@@ -117,7 +115,7 @@ def parse_pronunciation(word_class, trans):
                                            colors.pronunciation('/{}/'.format(ipa.get_text())))
             pronunciation.prons = res
     if trans == RU:
-        header = word_class.find('span', attrs={'class': 'di-info'})
+        header = part_speech.find('span', attrs={'class': 'di-info'})
         pos = header.find('span', attrs={'class': 'pos'})
         gcs = header.find('span', attrs={'class': 'gcs'})
         pron_info_list = header.findAll('span', attrs={'class': 'pron-info'})
@@ -134,85 +132,111 @@ def parse_pronunciation(word_class, trans):
                     res += '{} {} '.format(colors.pron_region(region.get_text().upper()),
                                            colors.pronunciation('/{}/'.format(ipa.get_text())))
             pronunciation.prons = res
+    logger.info('the pronunciation is: '.format(pronunciation.to_str()))
     return pronunciation
 
 
-def get_sense_block_title(sense_block):
+def get_sense_block_title(block):
     """
-    :param sense_block: html element BeautifulSoup object
+    :param block: html element BeautifulSoup object
     :return: string
     """
-    txt_block = sense_block.find('h3', attrs={'class': 'txt-block txt-block--alt2'})
-    if txt_block:
-        pos = txt_block.find('span', attrs={'class': 'pos'})
-        guideword = txt_block.find('span', attrs={'class': 'guideword'})
+    res = None
+    dsense_h = block.find('h3', attrs={'class': 'dsense_h'})
+    if dsense_h:
+        logger.info('fetch the dsense_h')
+        pos = dsense_h.find('span', attrs={'class': 'pos dsense_pos'})
+        guideword = dsense_h.find('span', attrs={'class': 'guideword dsense_gw'})
         sub_word = guideword.find('span')
-        return '{} {}\n'.format(colors.guidword('[' + sub_word.get_text() + ']'), pos.get_text() if pos else '')
+        res = '{} {}\n'.format(colors.guidword('[' + sub_word.get_text() + ']'), pos.get_text() if pos else '')
     # case for russian, words like 'get'
-    sense_head = sense_block.find('span', attrs={'class': 'sense-head'})
+    sense_head = block.find('span', attrs={'class': 'sense-head'})
     if sense_head:
         guideword = sense_head.find('strong', attrs={'class': 'gw'})
         gc = sense_head.find('span', attrs={'class': 'gc'})
-        return '{} {}\n'.format(colors.guidword(guideword.get_text()), '[' + gc.get_text() + ']' if gc else '')
+        res = '{} {}\n'.format(colors.guidword(guideword.get_text()), '[' + gc.get_text() + ']' if gc else '')
+    logger.info('the  title of block is {}'.format(res))
+    return res
 
 
-def get_dictionary(html, dictionary):
+def get_dictionary(html):
     """
     retrive dictionary body.
     :param html:
-    :param dictionary:
     :return:
     """
+    PR_DICTIONARY = 'pr dictionary'
+    ENTRY_BODY = 'entry-body'
     parsed_html = BeautifulSoup(html, features='html.parser')
     # this area contains all the dictionaries
-    cdo_dblclick_area = parsed_html.body.find('div', attrs={'class': 'cdo-dblclick-area'})
-    if not cdo_dblclick_area:
-        return
     res_dict = None
-    # get a custom dictionary
-    if dictionary:
-        res_dict = cdo_dblclick_area.find('div', attrs={'class': 'dictionary', 'data-id': dictionary})
-    if not res_dict:  # cannot retrieve a specific dict even if a given args.dictionary
-        # multi-dictionary or one entry-body
-        dictionaries = cdo_dblclick_area.findAll('div', attrs={'class': 'dictionary'})
-        if dictionaries:  # get at least one dictionary
-            res_dict = dictionaries[0]
-        if not dictionaries:  # no dictionary, just entry-body
-            res_dict = parsed_html.body.find('div', attrs={'class': 'entry-body'})
+    dictionaries = parsed_html.body.findAll('div', attrs={'class': PR_DICTIONARY})
+    if dictionaries:  # get at least one dictionary
 
+        res_dict = dictionaries[0]
+        logger.info('get a dictionary by {}'.format(PR_DICTIONARY))
+    else:  # no dictionary, just entry-body
+        res_dict = parsed_html.body.find('div', attrs={'class': ENTRY_BODY})
+        logger.info('get a dictionary by {}'.format(ENTRY_BODY))
     return res_dict
 
 
-def parse_sense_block(sense_block):
+def parse_pad_indents(block, args):
+    res = []
+    sense_body = block.find('div', attrs={'class': 'sense-body dsense_b'})
+    pad_indents = sense_body.findAll('div', attrs={'class': 'def-block ddef_block'})
+    logger.info('the number of pad_indent is {}'.format(len(pad_indents) if pad_indents else 0))
+
+    def get_definition(p):
+        d = p.find('div', attrs={'class': 'def ddef_d'})
+        return d.get_text() if d else None
+
+    def get_trans(body):
+        trans = body.find('span', attrs={'class': 'trans dtrans dtrans-se'}, recursive=False)
+        return trans.get_text().strip() if trans else None
+
+    def get_examps(body):
+        examps = body.findAll('span', attrs={'class': 'eg deg'})
+        return [e.get_text().strip() for e in examps] if examps else None
+
+    def get_synonym(body, arg):
+        if arg.synonym:
+            synonym = body.find('div', attrs={'class': 'xref synonym'})
+            if synonym:
+                pad_indent.synonym = parse_xref(synonym)
+
+    for pad in pad_indents:
+        def_body = pad.find('span', attrs={'class': 'def-body ddef_b'})
+        if not def_body:  # german dictionary use div tag
+            def_body = pad.find('div', attrs={'class': 'def-body'})
+
+        pad_indent = PadIndent(
+            definition=get_definition(pad),
+            trans=(get_trans(def_body) if def_body else None),
+            examps=(get_examps(def_body) if def_body else None),
+            synonym=(get_synonym(def_body, args)) if def_body else None
+        )
+        res.append(pad_indent)
+
+    return res
+
+
+def parse_block(block):
+    """
+    a block has multi def-blocks which give a detail definition fo the word
+    :param block:
+    :return:
+    """
     args = get_args()
-    sense_b = SenseBlock()
-    sense_b.title = get_sense_block_title(sense_block)
-    sense_body = sense_block.find('div', attrs={'class': 'sense-body'})
-    def_block_pad_indent_list = sense_body.findAll('div', attrs={'class': 'def-block pad-indent'})
-    for d in def_block_pad_indent_list:
-        pad_indent = PadIndent()
-        definition = d.find('b', attrs={'class': 'def'})
-        if definition:
-            pad_indent.definition = definition.get_text()
-        def_body = d.find('span', attrs={'class': 'def-body'})
-        if not def_body:
-            def_body = d.find('div', attrs={'class': 'def-body'})  # german dictionary use div tag
-        if def_body:
-            trans = def_body.find('span', attrs={'class': 'trans'}, recursive=False)
-            examps = def_body.findAll('span', attrs={'class': 'eg'})
-            if trans:
-                pad_indent.trans = trans.get_text().strip()
-            if examps:
-                pad_indent.examps = [e.get_text().strip() for e in examps]
-            if args.synonym:
-                synonym = def_body.find('div', attrs={'class': 'xref synonym'})
-                if synonym:
-                    pad_indent.synonym = parse_xref(synonym)
-        sense_b.pad_indents.append(pad_indent)
+
+    sense_b = SenseBlock(
+        title=get_sense_block_title(block),
+        pad_indents=parse_pad_indents(block, args)
+    )
     return sense_b
 
 
-def get_word_class(dict, trans):
+def get_part_speeches(dict, trans):
     """
     'help' has verb and noun at the same time. So each of them for one part of speech(pos)
     :param dict: dictionary
@@ -220,44 +244,65 @@ def get_word_class(dict, trans):
     :return: a list of pos
     """
     if trans == GB or trans == CN:
-        return dict.findAll('div', attrs={'class': 'entry-body__el clrd js-share-holder'})
+        return dict.findAll('div', attrs={'class': 'pr entry-body__el'}) or \
+               dict.findAll('div', attrs={'class': 'entry-body__el clrd js-share-holder'})
     if trans == DE:
-        return dict.findAll('div', attrs={
-            'class': 'di english-german kdict entry-body__el entry-body__el--smalltop clrd js-share-holder'})
+        return dict.findAll('div', attrs={'class': 'd pr di english-german kdic'})
     if trans == JP:
-        return dict.findAll('div',
-                            attrs={'class': 'di $dict entry-body__el entry-body__el--smalltop clrd js-share-holder'})
+        return dict.findAll('div', attrs={'class': 'pr entry-body__el'})
     if trans == FR:
-        return dict.findAll('div',
-                            attrs={
-                                'class': 'di english-french kdict entry-body__el entry-body__el--smalltop clrd js-share-holder'})
+        return dict.findAll('div', attrs={'class': 'd pr di english-french kdic'})
     if trans == RU or IT:
-        res = dict.findAll('div', attrs={'class': 'di $ entry-body__el entry-body__el--smalltop clrd js-share-holder'})
-        if res:
-            return res
-        res = dict.findAll('div', attrs={
-            'class': 'di $dict entry-body__el entry-body__el--smalltop clrd js-share-holder'})  # for look-up case
-        if res:
-            return res
+        return dict.findAll('div', attrs={'class': 'entry-body__el'}) or \
+               dict.findAll('div', attrs={
+                   'class': 'di $dict entry-body__el entry-body__el--smalltop clrd js-share-holder'})  # for look-up case
 
 
-async def look_up(word, trans, dict, results):
+def parse_sense_blocks(part_speech):
+    sense_blocks = []
+    blocks = []
+    blocks_with_gw = part_speech.findAll('div', attrs={'class': 'pr dsense'})  # meaning groups with guide word
+    blocks.extend(blocks_with_gw)
+    blocks_no_gw = part_speech.findAll('div', attrs={'class': 'pr dsense dsense-noh'})  # no guide word
+    blocks.extend(blocks_no_gw)
+    # some language like german or french has no 'pr dsense' or 'pr dsense dsense-noh', so use 'sense-block' to catch
+    # the block
+    if not blocks:
+        blocks.extend(part_speech.findAll('div', attrs={'class': 'sense-block pr dsense dsense-noh'}))
+    logger.info('the number of block is {}'.format(len(blocks) if blocks else 0))
+    for j, block in enumerate(blocks):
+        logger.info('parse the {}th block'.format(j))
+        sense_block = parse_block(block)
+        sense_blocks.append(sense_block)
+    return sense_blocks
+
+
+def parse_part_speeches(part_speeches, trans):
+    res = []
+    for i, p in enumerate(part_speeches):
+        logger.info('parse the {}th part_speech'.format(i))
+        part_speech = PartSpeech(
+            h_pronunciation=parse_pronunciation(p, trans),
+            sense_blocks=parse_sense_blocks(p)
+        )
+        res.append(part_speech)
+    return res
+
+
+async def look_up(word, trans, results):
+    logger.info('begin to retrive word: [{}] in {}'.format(word, trans))
     html = await load(word, translation[trans])
-    dictionary = get_dictionary(html, dict)
+    dictionary = get_dictionary(html)
     if not dictionary:
         results[word] = 'No result for {}'.format(word)
+        logger.info('No result for {}'.format(word))
         return
-    word_class_list = get_word_class(dictionary, trans)
-    word_obj = Word()
-    for w in word_class_list:
-        part_speech = PartSpeech()
-        pronunciation = parse_pronunciation(w, trans)
-        part_speech.pronunciation = pronunciation
-        sense_block_list = w.findAll('div', attrs={'class': 'sense-block'})  # one block for one meaning group.
-        for i, block in enumerate(sense_block_list):
-            sense_block = parse_sense_block(block)
-            part_speech.sense_blocks.append(sense_block)
-        word_obj.part_speeches.append(part_speech)
+
+    part_speeches = get_part_speeches(dictionary, trans)
+    logger.info('the number of part_speeh is {}'.format(len(part_speeches) if part_speeches else 0))
+    word_obj = Word(
+        part_speeches=parse_part_speeches(part_speeches, trans)
+    )
     results[word] = word_obj.to_str()
 
 
@@ -268,15 +313,16 @@ def main():
         if args.translation not in translation:
             print('Not support in {} translation. Supported languages are:\n{}'.format(args.translation, ''.join(
                 ['- ' + lang + '\n' for lang in SUPPORT_LANG])))
+            logger.info('Not support in {} translation.'.format(args.translation))
             exit()
         trans = args.translation
     return_dict = OrderedDict()
     loop = asyncio.get_event_loop()
     tasks = []
-
+    logger.info('start to work...')
     for w in args.word:
         return_dict[w] = None  # guarantee the orders
-        tasks.append(look_up(w, trans, args.dictionary, return_dict))
+        tasks.append(look_up(w, trans, return_dict))
     loop.run_until_complete(asyncio.wait(tasks))
 
     # threading.Thread()

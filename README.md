@@ -1,5 +1,5 @@
-### NOTE: the cambridge dictionary website has made a huge change in the front end design, so a lots of HTML tags should be rematched. This could take some times. What you would get deserves to wait :)
-# Usage
+### NOTE: After a quite hard and dull work to rematch the html tags and refactor,the cambrinary comes back. Thanks for your waiting. By now, no support for russian and italian, cause the cambridge server issue.
+# Uasge
 In python3 and the version must be 3.5.3 or later. to install package dependencies using pip3, run:
 ```
 pip3 install -r requirements.txt
@@ -22,8 +22,8 @@ python3 cambrinary.py -w world -t chinese
 - german
 - chinese
 - japanese
-- russian
-- italian
+- russian (temporarily no)
+- italian (temporarily no)
 
 ### multi-words support
 powered by coroutine, support as many as words you like,
@@ -53,6 +53,9 @@ Your cambrinary, you design.
 Use [conf.json](conf.json) to customize the color scheme, for instance,
 setting `pronunciation`, `definition` or `example_sentence` as you like. They could be in `bold` format, `blue` foreground  and `black` blackground, or any supported format and colors.
 All supported color please refer to [color_const.py](color_const.py).
+
+### Log
+logs is writen into `dict.log` in append way.
 # Help
 ```
 python3 cambrinary.py --help
