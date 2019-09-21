@@ -1,3 +1,4 @@
 dict.log
 .idea
 __pycache__
+.DS_Store

@@ -5,8 +5,8 @@ build-backend = "flit.buildapi"
 [tool.flit.metadata]
 module = "cambrinary"
 description-file = "README.md"
-author = "Pat"
-author-email = "NO"
+author = "xueyuanl"
+author-email = "p.xueyuanl@gmail.com"
 home-page = "https://github.com/xueyuanl/cambrinary"
 requires-python = ">=3.5.3"
 requires = ["aiohttp", "beautifulsoup4"]

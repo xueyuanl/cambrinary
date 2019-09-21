@@ -1,4 +1,3 @@
-### NOTE: After a quite hard and dull work to rematch the html tags and refactor,the cambrinary comes back. Thanks for your waiting. By now, no support for russian and italian, cause the cambridge server issue.
 # Usage
 In python3 and the version must be 3.5.3 or later. to install package from a local checkout, run:
 ```
@@ -9,9 +8,9 @@ or from PyPI:
 ```
 pip3 install cambrinary
 ```
-Look up 'world' for example:
+Look up 'hello' for example:
 ```
-cambrinary -w world
+cambrinary -w hello
 ```
 ![word hello](./images/hello)
 
@@ -27,14 +26,16 @@ cambrinary -w world -t chinese
 - german
 - chinese
 - japanese
-- russian (temporarily no)
-- italian (temporarily no)
+- russian (temporarily no, cause cambrige web issue)
+- italian (temporarily no, cause cambrige web issue)
 
 ### multi-words support
 powered by coroutine, support as many as words you like,
 ```
 cambrinary -w hello word
 ```
+![word hello-world](./images/hello-world)
+
 or
 ```
 cambrinary -w hello word -t chinese
@@ -60,7 +61,10 @@ setting `pronunciation`, `definition` or `example_sentence` as you like. They co
 All supported color please refer to [color_const.py](./cambrinary/color_const.py).
 
 ### Log
-logs is written into `$XDG_DATA_HOME/cambrinary/dict.log` (or `~/.local/share/cambrinary/dict.log`) in append way.
+logs is written into `~/.local/share/cambrinary/dict.log` in the append way.
+
+### Road map
+more development plan, please refer to [Wiki](https://github.com/xueyuanl/cambrinary/wiki/Road-Map)
 # Help
 ```
 cambrinary --help
