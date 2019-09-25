@@ -92,5 +92,5 @@ except KeyError:
     cfg = Path(os.environ['HOME']).absolute() / '.config' / 'cambrinary' / 'conf.json'
 if not cfg.is_file():
     cfg = Path(__file__).absolute().parent / 'conf.json'
-conf = Conf(cfg)
+conf = Conf(str(cfg))
 colors = Color(conf.color_scheme)
