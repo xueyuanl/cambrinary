@@ -1,19 +1,24 @@
 ### NOTE: After a quite hard and dull work to rematch the html tags and refactor,the cambrinary comes back. Thanks for your waiting. By now, no support for russian and italian, cause the cambridge server issue.
-# Uasge
-In python3 and the version must be 3.5.3 or later. to install package dependencies using pip3, run:
+# Usage
+In python3 and the version must be 3.5.3 or later. to install package from a local checkout, run:
 ```
-pip3 install -r requirements.txt
+pip3 install .
+```
+
+or from PyPI:
+```
+pip3 install cambrinary
 ```
 Look up 'world' for example:
 ```
-python3 cambrinary.py -w world
+cambrinary -w world
 ```
 ![word hello](./images/hello)
 
 ### multi-languages support
 in chinese(traditional)
 ```
-python3 cambrinary.py -w world -t chinese
+cambrinary -w world -t chinese
 ```
 ![word world](./images/world)
 #### Supported language list
@@ -28,35 +33,35 @@ python3 cambrinary.py -w world -t chinese
 ### multi-words support
 powered by coroutine, support as many as words you like,
 ```
-python3 cambrinary.py -w hello word
+cambrinary -w hello word
 ```
 or
 ```
-python3 cambrinary.py -w hello word -t chinese
+cambrinary -w hello word -t chinese
 ```
 even or more
 ```
-python3 cambrinary.py -w one two three four five -t french
+cambrinary -w one two three four five -t french
 ```
 
 ### Support phrase
 ```
-python3 cambrinary.py -w kick-off
+cambrinary -w kick-off
 ```
 or
 ```
-python3 cambrinary.py -w kick-off -t japanese
+cambrinary -w kick-off -t japanese
 ```
 ### Customize your color scheme
 Your cambrinary, you design.
 
-Use [conf.json](conf.json) to customize the color scheme, for instance,
-setting `pronunciation`, `definition` or `example_sentence` as you like. They could be in `bold` format, `blue` foreground  and `black` blackground, or any supported format and colors.
-All supported color please refer to [color_const.py](color_const.py).
+Use [conf.json](./cambrinary/conf.json) to customize the color scheme, for instance,
+setting `pronunciation`, `definition` or `example_sentence` as you like. They could be in `bold` format, `blue` foreground  and `black` background, or any supported format and colors.
+All supported color please refer to [color_const.py](./cambrinary/color_const.py).
 
 ### Log
-logs is writen into `dict.log` in append way.
+logs is written into `$XDG_DATA_HOME/cambrinary/dict.log` (or `~/.local/share/cambrinary/dict.log`) in append way.
 # Help
 ```
-python3 cambrinary.py --help
+cambrinary --help
 ```

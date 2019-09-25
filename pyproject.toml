@@ -1,0 +1,23 @@
+[build-system]
+requires = ["flit"]
+build-backend = "flit.buildapi"
+
+[tool.flit.metadata]
+module = "cambrinary"
+description-file = "README.md"
+author = "Pat"
+author-email = "NO"
+home-page = "https://github.com/xueyuanl/cambrinary"
+requires-python = ">=3.5.3"
+requires = ["aiohttp", "beautifulsoup4"]
+classifiers = [
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Environment :: Console"
+]
+keywords = "dictionary cambridge"
+
+[tool.flit.metadata.requires-extra]
+publish = ["flit"]
+
+[tool.flit.scripts]
+cambrinary = "cambrinary.cambrinary:main"

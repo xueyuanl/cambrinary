@@ -1,0 +1,8 @@
+certifi==2019.9.11        # via requests
+chardet==3.0.4            # via requests
+docutils==0.15.2          # via flit
+flit==1.3
+idna==2.8                 # via requests
+pytoml==0.1.21            # via flit
+requests==2.22.0          # via flit
+urllib3==1.25.6           # via requests

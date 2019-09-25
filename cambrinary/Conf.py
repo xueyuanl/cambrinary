@@ -1,7 +1,9 @@
 import json
+import os
 from collections import OrderedDict
+from pathlib import Path
 
-from color_const import *
+from .color_const import *
 
 
 def load(json_file):
@@ -84,5 +86,11 @@ class Color(object):
         return self.color(str, self.color_scheme.guidword)
 
 
-conf = Conf('conf.json')
+try:
+    cfg = Path(os.environ['XDG_CONFIG_HOME']).absolute() / 'cambrinary' / 'conf.json'
+except KeyError:
+    cfg = Path(os.environ['HOME']).absolute() / '.config' / 'cambrinary' / 'conf.json'
+if not cfg.is_file():
+    cfg = Path(__file__).absolute().parent / 'conf.json'
+conf = Conf(cfg)
 colors = Color(conf.color_scheme)
