@@ -6,9 +6,9 @@ from argparse import RawTextHelpFormatter
 import aiohttp
 from bs4 import BeautifulSoup
 
-from country_const import *
-from log import *
-from type import *
+from .country_const import *
+from .log import *
+from .type import *
 
 translation = {GB: 'english',
                CN: 'english-chinese-traditional',

@@ -1,4 +1,4 @@
-from Conf import *
+from .Conf import *
 
 
 class Pron(object):

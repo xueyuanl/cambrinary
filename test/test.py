@@ -13,7 +13,7 @@ logger = logging.getLogger('logger')
 logger.setLevel(logging.INFO)
 
 sys.path.append('.')  # for python3 test/test.py
-from country_const import *
+from cambrinary.country_const import *
 
 
 def get_args():
@@ -37,7 +37,7 @@ def run_case(word, trans=None):
     trans_arg = ''
     if trans:
         trans_arg = '-t {} '.format(trans)
-    cmd = 'python3 cambrinary.py {}-w {}'.format(trans_arg, word)
+    cmd = 'cambrinary {}-w {}'.format(trans_arg, word)
     try:
         if trans:
             logger.info("TEST word " + word + " in " + trans)
