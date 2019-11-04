@@ -59,7 +59,7 @@ def parse_xref(xref, indent=4):
 
 def parse_pronunciation(part_speech, trans):
     """
-    retrive the pronunciation from part_speech
+    retrieve the pronunciation from part_speech
     :param part_speech:
     :param trans:
     :return:
@@ -132,7 +132,7 @@ def parse_pronunciation(part_speech, trans):
                     res += '{} {} '.format(colors.pron_region(region.get_text().upper()),
                                            colors.pronunciation('/{}/'.format(ipa.get_text())))
             pronunciation.prons = res
-    logger.info('the pronunciation is: '.format(pronunciation.to_str()))
+    logger.info('the pronunciation is: {}'.format(pronunciation.to_str()))
     return pronunciation
 
 
@@ -159,28 +159,6 @@ def get_sense_block_title(block):
     return res
 
 
-def get_dictionary(html):
-    """
-    retrive dictionary body.
-    :param html:
-    :return:
-    """
-    PR_DICTIONARY = 'pr dictionary'
-    ENTRY_BODY = 'entry-body'
-    parsed_html = BeautifulSoup(html, features='html.parser')
-    # this area contains all the dictionaries
-    res_dict = None
-    dictionaries = parsed_html.body.findAll('div', attrs={'class': PR_DICTIONARY})
-    if dictionaries:  # get at least one dictionary
-
-        res_dict = dictionaries[0]
-        logger.info('get a dictionary by {}'.format(PR_DICTIONARY))
-    else:  # no dictionary, just entry-body
-        res_dict = parsed_html.body.find('div', attrs={'class': ENTRY_BODY})
-        logger.info('get a dictionary by {}'.format(ENTRY_BODY))
-    return res_dict
-
-
 def parse_pad_indents(block, args):
     res = []
     sense_body = block.find('div', attrs={'class': 'sense-body dsense_b'})
@@ -188,7 +166,7 @@ def parse_pad_indents(block, args):
     logger.info('the number of pad_indent is {}'.format(len(pad_indents) if pad_indents else 0))
 
     def get_definition(p):
-        d = p.find('div', attrs={'class': 'def ddef_d'})
+        d = p.find('div', attrs={'class': 'def ddef_d db'})
         return d.get_text() if d else None
 
     def get_trans(body):
@@ -252,8 +230,8 @@ def get_part_speeches(dict, trans):
         return dict.findAll('div', attrs={'class': 'pr entry-body__el'})
     if trans == FR:
         return dict.findAll('div', attrs={'class': 'd pr di english-french kdic'})
-    if trans == RU or IT:
-        return dict.findAll('div', attrs={'class': 'entry-body__el'}) or \
+    if trans == RU or trans == IT:
+        return dict.findAll('div', attrs={'class': 'pr entry-body__el'}) or \
                dict.findAll('div', attrs={
                    'class': 'di $dict entry-body__el entry-body__el--smalltop clrd js-share-holder'})  # for look-up case
 
@@ -289,8 +267,30 @@ def parse_part_speeches(part_speeches, trans):
     return res
 
 
+def get_dictionary(html):
+    """
+    retrieve dictionary body.
+    :param html:
+    :return:
+    """
+    pr_dictionary = 'pr dictionary'
+    entry_body = 'entry-body'
+    parsed_html = BeautifulSoup(html, features='html.parser')
+    # this area contains all the dictionaries
+    res_dict = None
+    dictionaries = parsed_html.body.findAll('div', attrs={'class': pr_dictionary})
+    if dictionaries:  # get at least one dictionary
+
+        res_dict = dictionaries[0]
+        logger.info('get a dictionary by {}'.format(pr_dictionary))
+    else:  # no dictionary, just entry-body
+        res_dict = parsed_html.body.find('div', attrs={'class': entry_body})
+        logger.info('get a dictionary by {}'.format(entry_body))
+    return res_dict
+
+
 async def look_up(word, trans, results):
-    logger.info('begin to retrive word: [{}] in {}'.format(word, trans))
+    logger.info('begin to retrieve word: [{}] in {}'.format(word, trans))
     html = await load(word, translation[trans])
     dictionary = get_dictionary(html)
     if not dictionary:

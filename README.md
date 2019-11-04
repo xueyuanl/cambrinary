@@ -26,8 +26,8 @@ cambrinary -w world -t chinese
 - german
 - chinese
 - japanese
+- italian 
 - russian (temporarily no, cause cambrige web issue)
-- italian (temporarily no, cause cambrige web issue)
 
 ### multi-words support
 powered by coroutine, support as many as words you like,
