@@ -1,10 +1,5 @@
 # Usage
-In python3 and the version must be 3.5.3 or later. to install package from a local checkout, run:
-```
-pip3 install .
-```
-
-or from PyPI:
+From PyPI:
 ```
 pip3 install cambrinary
 ```
@@ -59,6 +54,15 @@ Your cambrinary, you design.
 Use [conf.json](./cambrinary/conf.json) to customize the color scheme, for instance,
 setting `pronunciation`, `definition` or `example_sentence` as you like. They could be in `bold` format, `blue` foreground  and `black` background, or any supported format and colors.
 All supported color please refer to [color_const.py](./cambrinary/color_const.py).
+
+## For develop mode
+You can change and test locally by, git clone the repo, `cd` in the repo folder, run:
+```
+pip3 install .
+# and then
+cambrinary -t chinese -w testcase
+```
+maybe a venv is much better.
 
 ### Log
 logs is written into `~/.local/share/cambrinary/dict.log` in the append way.

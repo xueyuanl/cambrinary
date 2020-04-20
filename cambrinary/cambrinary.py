@@ -51,9 +51,9 @@ def parse_xref(xref, indent=4):
     :return: parsed string
     """
     res = ''
-    items = xref.findAll('div', attrs={'class': 'item'})
+    items = xref.findAll('span', attrs={'class': 'x-h dx-h'})
     for i in items:
-        res += '{}{}\n'.format('' * indent, i.get_text())
+        res += '{}{}\n'.format(' ' * indent, i.get_text())
     return res
 
 
@@ -179,9 +179,10 @@ def parse_pad_indents(block, args):
 
     def get_synonym(body, arg):
         if arg.synonym:
-            synonym = body.find('div', attrs={'class': 'xref synonym'})
+            synonym = body.find('div', attrs={'class': 'xref'})  # if set 'xref synonyms', can not fetch the value
             if synonym:
-                pad_indent.synonym = parse_xref(synonym)
+                logger.info('has synonym')
+                return parse_xref(synonym)
 
     for pad in pad_indents:
         def_body = pad.find('span', attrs={'class': 'def-body ddef_b'})

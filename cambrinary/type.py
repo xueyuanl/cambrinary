@@ -44,7 +44,7 @@ class PadIndent(object):
         if self.examps:
             res += ''.join([colors.exam_sen('  - ' + e) + '\n' for e in self.examps])
         if self.synonym:
-            res += '  Synonym' + '\n'
+            res += colors.synonym('  synonyms' + '\n')
             res += self.synonym
         return res
 

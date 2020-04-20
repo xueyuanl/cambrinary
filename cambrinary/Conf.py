@@ -12,13 +12,14 @@ def load(json_file):
 
 
 class ColorScheme(object):
-    def __init__(self, pron_region, definition, exam_sen, trans_def, pronunciation, guidword):
+    def __init__(self, pron_region, definition, exam_sen, trans_def, pronunciation, guidword, synonym):
         self.pron_region = pron_region
         self.definition = definition
         self.exam_sen = exam_sen
         self.trans_def = trans_def
         self.pronunciation = pronunciation
         self.guidword = guidword
+        self.synonym = synonym
 
     def to_dic(self):
         json_dic = OrderedDict()
@@ -28,13 +29,15 @@ class ColorScheme(object):
         json_dic['trans_def'] = self.trans_def
         json_dic['pronunciation'] = self.pronunciation
         json_dic['guidword'] = self.guidword
+        json_dic['synonym'] = self.synonym
         return json_dic
 
     @staticmethod
     def to_obj(color_scheme_dict):
         return ColorScheme(color_scheme_dict['pron_region'], color_scheme_dict['definition'],
                            color_scheme_dict['example_sentence'], color_scheme_dict['trans_definition'],
-                           color_scheme_dict['pronunciation'], color_scheme_dict['guidword'])
+                           color_scheme_dict['pronunciation'], color_scheme_dict['guidword'],
+                           color_scheme_dict['synonym'])
 
 
 class Conf(object):
@@ -84,6 +87,9 @@ class Color(object):
 
     def guidword(self, str):
         return self.color(str, self.color_scheme.guidword)
+
+    def synonym(self, str):
+        return self.color(str, self.color_scheme.synonym)
 
 
 try:
