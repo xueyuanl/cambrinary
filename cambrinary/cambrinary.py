@@ -34,9 +34,23 @@ def get_args():
 
 async def load(word, trans):
     url = 'https://dictionary.cambridge.org/dictionary/' + trans + '/' + word
-    async with aiohttp.request('GET', url) as resp:
-        html = await resp.text()
-        return html
+    cmd = 'curl -k -X GET {}'.format(url)
+    process = await asyncio.subprocess.create_subprocess_shell(cmd, shell=True, stdout=asyncio.subprocess.PIPE,
+                                                               stderr=asyncio.subprocess.PIPE)
+    stdout, stderr = await process.communicate()
+    if process.returncode != 0:
+        logger.error('failed to {}'.format(cmd))
+        logger.error('subprocess stderr: {}'.format(stderr.decode("utf-8").strip()))
+    else:
+        logger.info('successfully execute: {}'.format(cmd))
+        return stdout.decode('utf-8').strip()
+
+    # the aio method is temporally dropped, since it hit an error:
+    # ssl.SSLError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed (_ssl.c:852)
+    # async with aiohttp.request('GET', url) as resp:
+    #     html = await resp.text()
+    #     return html
+
     # from urllib import request
     # response = request.urlopen(url)
     # html = response.read()
