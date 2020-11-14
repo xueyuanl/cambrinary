@@ -8,14 +8,6 @@ from bs4 import BeautifulSoup
 
 from .type import *
 
-translation = {GB: 'english',
-               CN: 'english-chinese-traditional',
-               DE: 'english-german',
-               JP: 'english-japanese',
-               FR: 'english-french',
-               RU: 'english-russian',
-               IT: 'english-italian'}
-
 
 def get_args():
     parser = argparse.ArgumentParser(description='A linux online terminal dictionary based on cambridge dictionary',
@@ -67,7 +59,7 @@ def get_part_speeches(dict, trans):
                dict.findAll('div', attrs={'class': 'entry-body__el clrd js-share-holder'})
     elif trans == DE:
         return dict.findAll('div', attrs={'class': 'd pr di english-german kdic'})
-    elif trans == JP:
+    elif trans == JP or trans == KR:
         return dict.findAll('div', attrs={'class': 'pr entry-body__el'})
     elif trans == FR:
         return dict.findAll('div', attrs={'class': 'd pr di english-french kdic'})
@@ -98,13 +90,12 @@ def get_dictionary(html):
     else:  # no dictionary, just entry-body
         res_dict = parsed_html.body.find('div', attrs={'class': entry_body})
         logger.info('get a dictionary by {}'.format(entry_body))
-        logger.info('res_dict is {}'.format(res_dict))
     return res_dict
 
 
 async def look_up(word, trans, synonym, results):
     logger.info('begin to retrieve word: [{}] in {}'.format(word, trans))
-    html = await load(word, translation[trans])
+    html = await load(word, TRANSLATION[trans])
     dictionary = get_dictionary(html)
     if not dictionary:
         results[word] = 'No result for {}'.format(word)
@@ -118,6 +109,8 @@ async def look_up(word, trans, synonym, results):
     word_obj = Word()
     word_obj.parse_part_speeches(part_speeches)
     results[word] = word_obj.to_str()
+    if not results[word]:
+        logger.error('word {} has no result'.format(word))
 
 
 def main():
@@ -125,7 +118,7 @@ def main():
     trans = conf.default_trans_language
     synonym = args.synonym
     if args.translation:
-        if args.translation not in translation:
+        if args.translation not in TRANSLATION:
             print('Not support in {} translation. Supported languages are:\n{}'.format(args.translation, ''.join(
                 ['- ' + lang + '\n' for lang in SUPPORT_LANG])))
             logger.info('Not support in {} translation.'.format(args.translation))

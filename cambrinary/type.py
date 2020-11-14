@@ -58,7 +58,7 @@ class Pronunciation(object):
                     self.pos = pos.get_text()
                 if ipa:
                     self.prons = colors.pronunciation(' /{}/ '.format(ipa.get_text()))
-        elif Word.trans == JP or Word.trans == IT:
+        elif Word.trans in [JP, IT, KR]:
             header = part_speech.find('div', attrs={'class': 'pos-header'})
             if not header:  # word look-up in japanese
                 header = part_speech.find('span', attrs={'class': 'di-info'})

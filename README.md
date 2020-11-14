@@ -23,6 +23,7 @@ cambrinary -w world -t chinese
 - japanese
 - italian 
 - russian
+- korean
 
 ### multi-words support
 powered by coroutine, support as many as words you like,
