@@ -22,7 +22,7 @@ cambrinary -w world -t chinese
 - chinese
 - japanese
 - italian 
-- russian (temporarily no, cause cambrige web issue)
+- russian
 
 ### multi-words support
 powered by coroutine, support as many as words you like,
@@ -58,11 +58,13 @@ All supported color please refer to [color_const.py](./cambrinary/color_const.py
 ## For develop mode
 You can change and test locally by, git clone the repo, `cd` in the repo folder, run:
 ```
+python3 -m venv venv
+source venv/bin/activate
 pip3 install .
 # and then
-cambrinary -t chinese -w testcase
+cambrinary -w world
 ```
-maybe a venv is much better.
+Once you change the code, re-run `pip3 install .`
 
 ### Log
 logs is written into `~/.local/share/cambrinary/dict.log` in the append way.
