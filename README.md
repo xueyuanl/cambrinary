@@ -61,7 +61,7 @@ You can change and test locally by, git clone the repo, `cd` in the repo folder,
 ```
 python3 -m venv venv
 source venv/bin/activate
-pip3 install .
+pip3 install .  (try `curl https://bootstrap.pypa.io/get-pip.py | python3` to update pip3 if any error)
 # and then
 cambrinary -w world
 ```

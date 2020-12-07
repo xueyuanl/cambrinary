@@ -129,8 +129,9 @@ def main():
     tasks = []
     logger.info('start to work...')
     for w in args.word:
-        return_dict[w] = None  # guarantee the orders
-        tasks.append(look_up(w, trans, synonym, return_dict))
+        wl = w.lower()
+        return_dict[wl] = None  # guarantee the orders
+        tasks.append(look_up(wl, trans, synonym, return_dict))
     loop.run_until_complete(asyncio.wait(tasks))
 
     # threading.Thread()
