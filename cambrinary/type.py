@@ -108,6 +108,13 @@ class Pronunciation(object):
             res += self.prons
         return res if res == '' else res + '\n'
 
+    def to_dict(self):
+        dict_ = {}
+        dict_['pos'] = self.pos
+        dict_['gcs'] = self.gcs
+        dict_['prons'] = self.prons
+        return dict_
+
 
 class PadIndent(object):
     def __init__(self):
@@ -126,7 +133,7 @@ class PadIndent(object):
 
     def parse_examples(self, body):
         examples = body.findAll('span', attrs={'class': 'eg deg'})
-        self.examples = [e.get_text().strip() for e in examples] if examples else None
+        self.examples = [e.get_text().strip() for e in examples] if examples else []
 
     def parse_synonym(self, body):
         if Word.synonym:
@@ -134,6 +141,19 @@ class PadIndent(object):
             if synonym:
                 logger.info('has synonym')
                 self.synonym = self._parse_xref(synonym)
+
+    def _parse_xref(xref, indent=4):
+        """
+        parse things like synonym, idioms
+        :param xref: synonym or idioms object
+        :param indent:
+        :return: parsed string
+        """
+        res = ''
+        items = xref.findAll('span', attrs={'class': 'x-h dx-h'})
+        for i in items:
+            res += '{}{}\n'.format(' ' * indent, i.get_text())
+        return res
 
     def to_str(self):
         res = ''
@@ -147,6 +167,14 @@ class PadIndent(object):
             res += colors.synonym('  synonyms' + '\n')
             res += self.synonym
         return res
+
+    def to_dict(self):
+        dict_ = {}
+        dict_['definition'] = self.definition
+        dict_['trans'] = self.trans
+        dict_['examples'] = [i for i in self.examples]
+        dict_['synonym'] = self.synonym
+        return dict_
 
 
 class SenseBlock(object):
@@ -198,19 +226,6 @@ class SenseBlock(object):
 
             self.pad_indents.append(pad_indent)
 
-    def _parse_xref(xref, indent=4):
-        """
-        parse things like synonym, idioms
-        :param xref: synonym or idioms object
-        :param indent:
-        :return: parsed string
-        """
-        res = ''
-        items = xref.findAll('span', attrs={'class': 'x-h dx-h'})
-        for i in items:
-            res += '{}{}\n'.format(' ' * indent, i.get_text())
-        return res
-
     def to_str(self):
         res = ''
         if self.title:
@@ -219,20 +234,24 @@ class SenseBlock(object):
             res += p.to_str()
         return res
 
+    def to_dict(self):
+        dict_ = {}
+        dict_['title'] = self.title
+        dict_['pad_indents'] = [i.to_dict() for i in self.pad_indents]
+        return dict_
+
 
 class PartSpeech(object):
 
     def __init__(self):
-        self.pronunciation = None  # header
+        self.pronunciation = Pronunciation()  # header
         self.sense_blocks = []  # body []
 
     def parse_pronunciation(self, part_speech):
         """
         retrieve the pronunciation from part_speech
         """
-        pronunciation = Pronunciation()
-        pronunciation.parse_all(part_speech)
-        self.pronunciation = pronunciation
+        self.pronunciation.parse_all(part_speech)
 
     def parse_sense_blocks(self, part_speech):
         blocks = []
@@ -260,6 +279,12 @@ class PartSpeech(object):
             res += s.to_str()
         return res
 
+    def to_dict(self):
+        dict_ = {}
+        dict_['pronunciation'] = self.pronunciation.to_dict()
+        dict_['sense_blocks'] = [i.to_dict() for i in self.sense_blocks]
+        return dict_
+
 
 class Word(object):
     trans = None
@@ -281,3 +306,8 @@ class Word(object):
         for p in self.part_speeches:
             res += p.to_str()
         return res
+
+    def to_dict(self):
+        dict_ = {}
+        dict_['part_speeches'] = [i.to_dict() for i in self.part_speeches]
+        return dict_

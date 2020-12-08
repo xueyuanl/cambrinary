@@ -6,6 +6,7 @@ from argparse import RawTextHelpFormatter
 import aiohttp
 from bs4 import BeautifulSoup
 
+from .note import NoteParams
 from .type import *
 
 
@@ -18,6 +19,8 @@ def get_args():
                              "Supported language:\n"
                              "{}".format(''.join(['- ' + lang + '\n' for lang in SUPPORT_LANG])))
     parser.add_argument('-s', '--synonym', action="store_true", help='show the synonym of the word if has')
+    parser.add_argument('-n', '--note', nargs='?', const=NoteParams.VOID_VALUE.name, default=NoteParams.NO_USE,
+                        help='add to notebook')
     args = parser.parse_args()
     return args
 
@@ -82,7 +85,12 @@ def get_dictionary(html):
     parsed_html = BeautifulSoup(html, features='html.parser')
     # this area contains all the dictionaries
     res_dict = None
-    dictionaries = parsed_html.body.findAll('div', attrs={'class': pr_dictionary})
+    try:
+        dictionaries = parsed_html.body.findAll('div', attrs={'class': pr_dictionary})
+    except Exception as e:
+        logger.info('can not find dict body')  # typically, there is no such word, like `aakkbb`
+        logger.exception(e)
+        return None
     if dictionaries:  # get at least one dictionary
 
         res_dict = dictionaries[0]
@@ -98,7 +106,7 @@ async def look_up(word, trans, synonym, results):
     html = await load(word, TRANSLATION[trans])
     dictionary = get_dictionary(html)
     if not dictionary:
-        results[word] = 'No result for {}'.format(word)
+        results[word] = 'word {} has no result'.format(word)
         logger.info('No result for {}'.format(word))
         return
 
@@ -108,8 +116,11 @@ async def look_up(word, trans, synonym, results):
     Word.synonym = synonym
     word_obj = Word()
     word_obj.parse_part_speeches(part_speeches)
+    print(word_obj.to_dict())
+    logger.info(word_obj.to_dict())
     results[word] = word_obj.to_str()
     if not results[word]:
+        results[word] = 'word {} has no result'.format(word)
         logger.error('word {} has no result'.format(word))
 
 

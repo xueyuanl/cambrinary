@@ -42,14 +42,16 @@ class ColorScheme(object):
 
 class Conf(object):
     def __init__(self, path):
-        self.conf_dict = load(path)
-        self.color_scheme = ColorScheme.to_obj(self.conf_dict['color_scheme'])
-        self.default_trans_language = self.conf_dict['default_trans_language']
+        conf_dict = load(path)
+        self.color_scheme = ColorScheme.to_obj(conf_dict['color_scheme'])
+        self.notebook_path = conf_dict['notebook_path']
+        self.default_trans_language = conf_dict['default_trans_language']
 
     def to_dic(self):
         json_dic = OrderedDict()
         json_dic['color_scheme'] = self.color_scheme
         json_dic['default_trans_language'] = self.default_trans_language
+        json_dic['notebook_path'] = self.notebook_path
         return json_dic
 
 
