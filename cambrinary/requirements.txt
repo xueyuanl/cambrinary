@@ -2,6 +2,7 @@ aiohttp==3.6.1
 async-timeout==3.0.1      # via aiohttp
 attrs==19.1.0             # via aiohttp
 beautifulsoup4==4.8.0
+pyyaml==5.3.1
 chardet==3.0.4            # via aiohttp
 idna==2.8                 # via yarl
 multidict==4.5.2          # via aiohttp, yarl

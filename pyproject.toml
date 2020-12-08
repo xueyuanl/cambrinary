@@ -9,7 +9,7 @@ author = "xueyuanl"
 author-email = "p.xueyuanl@gmail.com"
 home-page = "https://github.com/xueyuanl/cambrinary"
 requires-python = ">=3.5.3"
-requires = ["aiohttp", "beautifulsoup4"]
+requires = ["aiohttp", "beautifulsoup4", "pyyaml"]
 classifiers = [
     "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
     "Environment :: Console"

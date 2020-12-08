@@ -2,11 +2,11 @@
 import argparse
 import asyncio
 from argparse import RawTextHelpFormatter
-from .Conf import colors
+
 import aiohttp
 from bs4 import BeautifulSoup
 
-from .note import NoteParams
+from .note import NoteParams, NoteBook
 from .type import *
 
 
@@ -101,7 +101,7 @@ def get_dictionary(html):
     return res_dict
 
 
-async def look_up(word, trans, synonym, results):
+async def look_up(word, trans, synonym, results, notebook_path):
     logger.info('begin to retrieve word: [{}] in {}'.format(word, trans))
     html = await load(word, TRANSLATION[trans])
     dictionary = get_dictionary(html)
@@ -116,7 +116,10 @@ async def look_up(word, trans, synonym, results):
     Word.synonym = synonym
     word_obj = Word()
     word_obj.parse_part_speeches(part_speeches)
-    logger.info(word_obj.to_dict())
+
+    word_dict = word_obj.to_dict()
+    logger.info(word_dict)
+    NoteBook.save({word: word_dict}, notebook_path)
     colors.apply(word_obj)
     results[word] = word_obj.to_str()
     if not results[word]:
@@ -128,6 +131,7 @@ def main():
     args = get_args()
     trans = conf.default_trans_language
     synonym = args.synonym
+
     if args.translation:
         if args.translation not in TRANSLATION:
             print('Not support in {} translation. Supported languages are:\n{}'.format(args.translation, ''.join(
@@ -135,6 +139,19 @@ def main():
             logger.info('Not support in {} translation.'.format(args.translation))
             exit()
         trans = args.translation
+
+    notebook_path = None
+    if args.note != NoteParams.NO_USE.name:  # use the flag
+        if args.note == NoteParams.VOID_VALUE.name:
+            notebook_path = NoteBook.get_default_notebook_path()
+            logger.info('default notebook path is {}'.format(notebook_path))
+        else:
+            notebook_path = args.note
+            logger.info('get notebook path from input {}'.format(notebook_path))
+        if not os.path.isfile(notebook_path):
+            print('The file {} does not exist.'.format(notebook_path))
+            exit()
+
     return_dict = OrderedDict()
     loop = asyncio.get_event_loop()
     tasks = []
@@ -142,7 +159,7 @@ def main():
     for w in args.word:
         wl = w.lower()
         return_dict[wl] = None  # guarantee the orders
-        tasks.append(look_up(wl, trans, synonym, return_dict))
+        tasks.append(look_up(wl, trans, synonym, return_dict, notebook_path))
     loop.run_until_complete(asyncio.wait(tasks))
 
     # threading.Thread()
