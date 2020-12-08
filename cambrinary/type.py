@@ -10,14 +10,20 @@ class Pron(object):
         self.ipa = None
 
     def to_str(self):
-        pass
+        if self.region:
+            return '{} {} '.format(self.region, self.ipa)
+        else:
+            return ' {} '.format(self.ipa)
+
+    def to_dict(self):
+        return {'region': self.region, 'lab': self.lab, 'ipa': self.ipa}
 
 
 class Pronunciation(object):
     def __init__(self):
         self.pos = None
         self.gcs = None
-        self.prons = None
+        self.prons = []
 
     def parse_pos(self):
         pass
@@ -39,16 +45,15 @@ class Pronunciation(object):
             if gcs:
                 self.gcs = gcs.get_text().strip()
             prons = header.findAll('span', recursive=False)
-            res = ''
             for p in prons:
+                pron = Pron()
                 region = p.find('span', attrs={'class': 'region'})
                 # lab = p.find('span', attrs={'class': 'lab'})
                 ipa = p.find('span', attrs={'class': 'ipa'})
                 if region and ipa:
-                    res += '{} {} '.format(
-                        colors.pron_region(region.get_text().upper()),  # lab.get_text().upper() + ' ' if lab else '',
-                        colors.pronunciation('/{}/'.format(ipa.get_text())))
-            self.prons = res
+                    pron.region = region.get_text().upper()
+                    pron.ipa = '/{}/'.format(ipa.get_text())
+                    self.prons.append(pron)
         elif Word.trans == DE or Word.trans == FR:
             di_info = part_speech.find('span', attrs={'class': 'di-info'})
             if di_info:  # like look-up has no pronunciation
@@ -57,7 +62,9 @@ class Pronunciation(object):
                 if pos:
                     self.pos = pos.get_text()
                 if ipa:
-                    self.prons = colors.pronunciation(' /{}/ '.format(ipa.get_text()))
+                    pron = Pron()
+                    pron.ipa = '/{}/'.format(ipa.get_text())
+                    self.prons.append(pron)
         elif Word.trans in [JP, IT, KR]:
             header = part_speech.find('div', attrs={'class': 'pos-header'})
             if not header:  # word look-up in japanese
@@ -70,14 +77,14 @@ class Pronunciation(object):
             if gcs:
                 self.gcs = gcs.get_text().strip()
             if pron_info_list:
-                res = ''
                 for pron in pron_info_list:
+                    pron = Pron()
                     region = pron.find('span', attrs={'class': 'region'})
                     ipa = pron.find('span', attrs={'class': 'ipa'})
                     if region and ipa:
-                        res += '{} {} '.format(colors.pron_region(region.get_text().upper()),
-                                               colors.pronunciation('/{}/'.format(ipa.get_text())))
-                self.prons = res
+                        pron.region = region.get_text().upper()
+                        pron.ipa = '/{}/'.format(ipa.get_text())
+                        self.prons.append(pron)
         elif Word.trans == RU:
             header = part_speech.find('span', attrs={'class': 'di-info'})
             pos = header.find('span', attrs={'class': 'pos'})
@@ -88,14 +95,14 @@ class Pronunciation(object):
             if gcs:
                 self.gcs = gcs.get_text().strip()
             if pron_info_list:
-                res = ''
                 for pron in pron_info_list:
+                    pron = Pron()
                     region = pron.find('span', attrs={'class': 'region'})
                     ipa = pron.find('span', attrs={'class': 'ipa'})
                     if region and ipa:
-                        res += '{} {} '.format(colors.pron_region(region.get_text().upper()),
-                                               colors.pronunciation('/{}/'.format(ipa.get_text())))
-                self.prons = res
+                        pron.region = region.get_text().upper()
+                        pron.ipa = '/{}/'.format(ipa.get_text())
+                        self.prons.append(pron)
         logger.info('the pronunciation is: {}'.format(self.to_str()))
 
     def to_str(self):
@@ -104,16 +111,12 @@ class Pronunciation(object):
             res += '{} '.format(self.pos)
         if self.gcs:
             res += '[{}] '.format(self.gcs)
-        if self.prons:
-            res += self.prons
+        for p in self.prons:
+            res += p.to_str()
         return res if res == '' else res + '\n'
 
     def to_dict(self):
-        dict_ = {}
-        dict_['pos'] = self.pos
-        dict_['gcs'] = self.gcs
-        dict_['prons'] = self.prons
-        return dict_
+        return {'pos': self.pos, 'gcs': self.gcs, 'prons': [i.to_dict() for i in self.prons]}
 
 
 class PadIndent(object):
@@ -158,23 +161,19 @@ class PadIndent(object):
     def to_str(self):
         res = ''
         if self.definition:
-            res += colors.definition('* ' + self.definition) + '\n'
+            res += self.definition + '\n'
         if self.trans:
-            res += colors.trans_def('  {}\n'.format(self.trans))
+            res += '  {}\n'.format(self.trans)
         if self.examples:
-            res += ''.join([colors.exam_sen('  - ' + e) + '\n' for e in self.examples])
+            res += ''.join([e + '\n' for e in self.examples])
         if self.synonym:
             res += colors.synonym('  synonyms' + '\n')
             res += self.synonym
         return res
 
     def to_dict(self):
-        dict_ = {}
-        dict_['definition'] = self.definition
-        dict_['trans'] = self.trans
-        dict_['examples'] = [i for i in self.examples]
-        dict_['synonym'] = self.synonym
-        return dict_
+        return {'definition': self.definition, 'trans': self.trans,
+                'examples': [i for i in self.examples], 'synonym': self.synonym}
 
 
 class SenseBlock(object):
@@ -197,15 +196,15 @@ class SenseBlock(object):
             pos = dsense_h.find('span', attrs={'class': 'pos dsense_pos'})
             guideword = dsense_h.find('span', attrs={'class': 'guideword dsense_gw'})
             sub_word = guideword.find('span')
-            self.title = '{} {}\n'.format(colors.guidword('[' + sub_word.get_text() + ']'),
-                                          pos.get_text() if pos else '')
+            self.title = '{} {}'.format('[' + sub_word.get_text() + ']',
+                                        pos.get_text() if pos else '')
         # case for russian, words like 'get'
         sense_head = block.find('span', attrs={'class': 'sense-head'})
         if sense_head:
             guideword = sense_head.find('strong', attrs={'class': 'gw'})
             gc = sense_head.find('span', attrs={'class': 'gc'})
-            self.title = '{} {}\n'.format(colors.guidword(guideword.get_text()),
-                                          '[' + gc.get_text() + ']' if gc else '')
+            self.title = '{} {}'.format(guideword.get_text(),
+                                        '[' + gc.get_text() + ']' if gc else '')
         logger.info('the  title of block is {}'.format(self.title))
 
     def parse_pad_indents(self, block):
@@ -229,16 +228,13 @@ class SenseBlock(object):
     def to_str(self):
         res = ''
         if self.title:
-            res += self.title
+            res += self.title + '\n'
         for p in self.pad_indents:
             res += p.to_str()
         return res
 
     def to_dict(self):
-        dict_ = {}
-        dict_['title'] = self.title
-        dict_['pad_indents'] = [i.to_dict() for i in self.pad_indents]
-        return dict_
+        return {'title': self.title, 'pad_indents': [i.to_dict() for i in self.pad_indents]}
 
 
 class PartSpeech(object):
@@ -280,10 +276,7 @@ class PartSpeech(object):
         return res
 
     def to_dict(self):
-        dict_ = {}
-        dict_['pronunciation'] = self.pronunciation.to_dict()
-        dict_['sense_blocks'] = [i.to_dict() for i in self.sense_blocks]
-        return dict_
+        return {'pronunciation': self.pronunciation.to_dict(), 'sense_blocks': [i.to_dict() for i in self.sense_blocks]}
 
 
 class Word(object):
@@ -308,6 +301,4 @@ class Word(object):
         return res
 
     def to_dict(self):
-        dict_ = {}
-        dict_['part_speeches'] = [i.to_dict() for i in self.part_speeches]
-        return dict_
+        return {'part_speeches': [i.to_dict() for i in self.part_speeches]}

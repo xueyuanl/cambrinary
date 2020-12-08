@@ -67,27 +67,48 @@ class Color(object):
         :param color_scheme: refer it in `color_const.py`
         :return: colored str
         """
+        if not s:
+            return s
         pre = '\033['
         post = '\033[0m'
         return '{}{};{};{}m{}{}'.format(pre, format_dic[color_scheme[0]], foreground_dic[color_scheme[1]],
                                         background_dic[color_scheme[2]], s, post)
 
-    def pron_region(self, str):
+    def apply(self, word):
+
+        for part in word.part_speeches:
+            # color region and pronunciation
+            for pron in part.pronunciation.prons:
+                pron.region = self._pron_region(pron.region)
+                pron.ipa = self._pronunciation(pron.ipa)
+
+            # color definition
+            for sense in part.sense_blocks:
+                for pad in sense.pad_indents:
+                    pad.definition = self._definition('* ' + pad.definition)
+                    pad.trans = self._trans_def(pad.trans)
+                    # color example sentence
+                    colored_sentences = []
+                    for e in pad.examples:
+                        colored_sentences.append(self._exam_sen('  - ' + e))
+                    pad.examples = colored_sentences
+
+    def _pron_region(self, str):
         return self.color(str, self.color_scheme.pron_region)
 
-    def pronunciation(self, str):
+    def _pronunciation(self, str):
         return self.color(str, self.color_scheme.pronunciation)
 
-    def definition(self, str):
+    def _definition(self, str):
         return self.color(str, self.color_scheme.definition)
 
-    def trans_def(self, str):
+    def _trans_def(self, str):
         return self.color(str, self.color_scheme.trans_def)
 
-    def exam_sen(self, str):
+    def _exam_sen(self, str):
         return self.color(str, self.color_scheme.exam_sen)
 
-    def guidword(self, str):
+    def _guidword(self, str):
         return self.color(str, self.color_scheme.guidword)
 
     def synonym(self, str):

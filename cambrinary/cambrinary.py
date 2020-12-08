@@ -2,7 +2,7 @@
 import argparse
 import asyncio
 from argparse import RawTextHelpFormatter
-
+from .Conf import colors
 import aiohttp
 from bs4 import BeautifulSoup
 
@@ -116,8 +116,8 @@ async def look_up(word, trans, synonym, results):
     Word.synonym = synonym
     word_obj = Word()
     word_obj.parse_part_speeches(part_speeches)
-    print(word_obj.to_dict())
     logger.info(word_obj.to_dict())
+    colors.apply(word_obj)
     results[word] = word_obj.to_str()
     if not results[word]:
         results[word] = 'word {} has no result'.format(word)
