@@ -140,17 +140,7 @@ def main():
             exit()
         trans = args.translation
 
-    notebook_path = None
-    if args.note != NoteParams.NO_USE.name:  # use the flag
-        if args.note == NoteParams.VOID_VALUE.name:
-            notebook_path = NoteBook.get_default_notebook_path()
-            logger.info('default notebook path is {}'.format(notebook_path))
-        else:
-            notebook_path = args.note
-            logger.info('get notebook path from input {}'.format(notebook_path))
-        if not os.path.isfile(notebook_path):
-            print('The file {} does not exist.'.format(notebook_path))
-            exit()
+    notebook_path = NoteBook.get_path(args.note)
 
     return_dict = OrderedDict()
     loop = asyncio.get_event_loop()
