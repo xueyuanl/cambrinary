@@ -121,15 +121,17 @@ class PadIndent(object):
         self.definition = d.get_text() if d else None
 
     def parse_trans(self, body):
-        trans = body.find('span', attrs={'class': 'trans dtrans dtrans-se'}, recursive=False)
-        self.trans = trans.get_text().strip() if trans else None
+        if body is not None:
+            trans = body.find('span', attrs={'class': 'trans dtrans dtrans-se'}, recursive=False)
+            self.trans = trans.get_text().strip() if trans else None
 
     def parse_examples(self, body):
-        examples = body.findAll('span', attrs={'class': 'eg deg'})
-        self.examples = [e.get_text().strip() for e in examples] if examples else None
+        if body is not None:
+            examples = body.findAll('span', attrs={'class': 'eg deg'})
+            self.examples = [e.get_text().strip() for e in examples] if examples else None
 
     def parse_synonym(self, body):
-        if Word.synonym:
+        if Word.synonym and body is not None:
             synonym = body.find('div', attrs={'class': 'xref'})  # if set 'xref synonyms', can not fetch the value
             if synonym:
                 logger.info('has synonym')
