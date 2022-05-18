@@ -79,23 +79,23 @@ class Pronunciation(object):
                                                colors.pronunciation('/{}/'.format(ipa.get_text())))
                 self.prons = res
         elif Word.trans == RU:
-            header = part_speech.find('span', attrs={'class': 'di-info'})
-            pos = header.find('span', attrs={'class': 'pos'})
+            header = part_speech.find('div', attrs={'class': 'pos-header'})
+            pos = header.findAll('span', attrs={'class': 'pos'})
             gcs = header.find('span', attrs={'class': 'gcs'})
-            pron_info_list = header.findAll('span', attrs={'class': 'pron-info'})
             if pos:
-                self.pos = pos.get_text()
+                self.pos = '{}'.format(', '.join([p.get_text() for p in pos]))
             if gcs:
                 self.gcs = gcs.get_text().strip()
-            if pron_info_list:
-                res = ''
-                for pron in pron_info_list:
-                    region = pron.find('span', attrs={'class': 'region'})
-                    ipa = pron.find('span', attrs={'class': 'ipa'})
-                    if region and ipa:
-                        res += '{} {} '.format(colors.pron_region(region.get_text().upper()),
-                                               colors.pronunciation('/{}/'.format(ipa.get_text())))
-                self.prons = res
+            prons = header.findAll('span', recursive=False)
+            res = ''
+            for p in prons:
+                region = p.find('span', attrs={'class': 'region'})
+                ipa = p.find('span', attrs={'class': 'ipa'})
+                if region and ipa:
+                    res += '{} {} '.format(
+                        colors.pron_region(region.get_text().upper()),
+                        colors.pronunciation('/{}/'.format(ipa.get_text())))
+            self.prons = res
         logger.info('the pronunciation is: {}'.format(self.to_str()))
 
     def to_str(self):

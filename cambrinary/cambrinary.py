@@ -68,7 +68,7 @@ def get_part_speeches(dict, trans):
                dict.findAll('div', attrs={
                    'class': 'di $dict entry-body__el entry-body__el--smalltop clrd js-share-holder'})  # for look-up case
     elif trans == RU:
-        return dict.findAll('div', attrs={'class': 'di $ entry-body__el entry-body__el--smalltop clrd js-share-holder'})
+        return dict.findAll('div', attrs={'class': 'pr entry-body__el'})
 
 
 def get_dictionary(html):
