@@ -103,7 +103,7 @@ async def look_up(word, trans, synonym, results):
         return
 
     part_speeches = get_part_speeches(dictionary, trans)
-    logger.info('the number of part_speeh is {}'.format(len(part_speeches) if part_speeches else 0))
+    logger.info('the number of part_speech is {}'.format(len(part_speeches) if part_speeches else 0))
     Word.trans = trans
     Word.synonym = synonym
     word_obj = Word()
