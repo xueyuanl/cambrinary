@@ -67,6 +67,12 @@ cambrinary -w world
 ```
 Once you change the code, re-run `pip3 install .`
 
+Or simply run the following in the repo folder:
+
+```sh
+python3 -m cambrinary.cambrinary -w world
+```
+
 ### Log
 logs is written into `~/.local/share/cambrinary/dict.log` in the append way.
 
