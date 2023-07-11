@@ -122,7 +122,7 @@ class PadIndent(object):
 
     def parse_trans(self, body):
         if body is not None:
-            trans = body.find('span', attrs={'class': 'trans dtrans dtrans-se'}, recursive=False)
+            trans = body.find('span', attrs={'class': 'trans'}, recursive=False)
             self.trans = trans.get_text().strip() if trans else None
 
     def parse_examples(self, body):
