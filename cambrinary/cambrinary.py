@@ -113,6 +113,10 @@ async def look_up(word, trans, synonym, results):
         logger.error('word {} has no result'.format(word))
 
 
+async def run_coros(coros):
+    await asyncio.gather(*coros)
+
+
 def main():
     args = get_args()
     trans = conf.default_trans_language
@@ -125,14 +129,13 @@ def main():
             exit()
         trans = args.translation
     return_dict = OrderedDict()
-    loop = asyncio.get_event_loop()
-    tasks = []
+    coros = []
     logger.info('start to work...')
     for w in args.word:
         wl = w.lower()
         return_dict[wl] = None  # guarantee the orders
-        tasks.append(look_up(wl, trans, synonym, return_dict))
-    loop.run_until_complete(asyncio.wait(tasks))
+        coros.append(look_up(wl, trans, synonym, return_dict))
+    asyncio.run(run_coros(coros))
 
     # threading.Thread()
     # return_dict = OrderedDict()
