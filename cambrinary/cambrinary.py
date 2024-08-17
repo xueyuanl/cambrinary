@@ -24,7 +24,7 @@ def get_args():
 
 async def load(word, trans):
     url = 'https://dictionary.cambridge.org/dictionary/' + trans + '/' + word
-    cmd = 'curl -k -X GET {}'.format(url)
+    cmd = 'curl -k -A "Mozilla Chrome Safari" -X GET {}'.format(url)
     process = await asyncio.subprocess.create_subprocess_shell(cmd, shell=True, stdout=asyncio.subprocess.PIPE,
                                                                stderr=asyncio.subprocess.PIPE)
     stdout, stderr = await process.communicate()
